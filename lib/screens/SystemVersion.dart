@@ -87,7 +87,7 @@ class _SystemVersionScreenState extends State<SystemVersionScreen> {
       return Column(
         children: [
           Text("Detected Version: ${systemInfoController.version}"),
-          Text("Number of Switches: ${systemInfo.switches.length}"),
+          Text("Number of Switches: "),
           Expanded(
             child: ListView.builder(
                 itemCount: systemInfo.sensors.length,
@@ -129,35 +129,3 @@ class _SystemVersionScreenState extends State<SystemVersionScreen> {
     }
   }
 }
-
-/*class SystemInfo {
-  final String version;
-  final Map<String, bool> sensors; // Store sensors here
-  final Map<String, int> switches; // Add switches property
-  final Map<String, int> nutrientPumps; // Add switches property
-
-
-  SystemInfo(
-      {required this.version,
-      required this.sensors,
-      required this.switches, required this.nutrientPumps}); // Update constructor
-
-  factory SystemInfo.loading() => SystemInfo(
-      version: 'Loading...', sensors: {}, switches: {}, nutrientPumps: {}); // Empty sensors map
-  bool get isLoading => version == 'Loading...';
-
-  factory SystemInfo.fromJson(Map<String, dynamic> json) {
-    return SystemInfo(
-      version: json['version'],
-      sensors: (json['sensors'] as Map<String, dynamic>).map(
-        (key, value) => MapEntry(key, value as bool),
-      ),
-      switches: (json['switches'] as Map<String, dynamic>).map(
-        (key, value) => MapEntry(key, value as int),
-      ),
-      nutrientPumps: (json['nutrientpumps'] as Map<String, dynamic>).map(
-            (key, value) => MapEntry(key, value as int),
-      ),
-    );
-  }
-}*/

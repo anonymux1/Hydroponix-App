@@ -5,9 +5,8 @@ class System {
   String? ssid;
   String? password;
   Map<String, bool>? sensors;
-  int? lightDutySwitches = 0;
-  int? heavyDutySwitches = 0;
-  int? peristalticPumpsCount = 0;
+  int? switches;
+  int? peristalticPumpsCount;
   List<String>? modules;
   Map<String, String>? moduleMappings;
 
@@ -18,8 +17,7 @@ class System {
     this.password,
     this.version,
     this.sensors,
-    this.lightDutySwitches,
-    this.heavyDutySwitches,
+    this.switches,
     this.peristalticPumpsCount,
     this.modules,
     this.moduleMappings,
@@ -33,8 +31,7 @@ class System {
           'ssid': ssid,
           'password': password,
           'sensors': sensors,
-          'lightDutySwitches': lightDutySwitches,
-          'heavyDutySwitches': heavyDutySwitches,
+          'switches': switches,
           'peristalticPumpsCount': peristalticPumpsCount,
           'modules': modules,
           'moduleMappings': moduleMappings

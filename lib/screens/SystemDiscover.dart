@@ -1,3 +1,4 @@
+import 'package:Hydroponix/screens/SystemVersion.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -120,7 +121,7 @@ class _SystemDiscoverScreenState extends State<SystemDiscoverScreen> {
         await WiFiForIoTPlugin.connect(hydroNetwork.ssid,
             security: NetworkSecurity.NONE);
         // await Future.delayed(Duration(milliseconds: 500));
-        Get.to(() => SystemProvisioningScreen()); // Navigate on success
+        Get.to(() => SystemVersionScreen()); // Navigate on success
       } else {
         // Handle the case where "Hydroponix" network not found
         await showDialog(

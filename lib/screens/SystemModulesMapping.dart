@@ -54,9 +54,6 @@ class _SystemModulesMappingScreenState
   }
 
   Future<void> _mapHobbyModules() async {
-  //  int switchIndex = 0;
-  //  for (; switchIndex < systemInfoController.systemInfo!.switches.length - 1 ; switchIndex++) {
-      // 1. Control Switch
       await _controlSwitch(0, true);
       final moduleType = await showDialog<String>(
         context: context,
@@ -88,39 +85,17 @@ class _SystemModulesMappingScreenState
 
   Future<void> _mapProModules() async {
     // Implementation in next step
-    final lightDutySwitches = systemInfoController.systemInfo.value!.lightDutySwitches ?? 0;
-    for (int switchIndex = 0; switchIndex < lightDutySwitches; switchIndex++) {
+    final switches = systemInfoController.systemInfo.value!.switches ?? 0;
+    var modulesList = systemInfoController.systemInfo.value!.modules;
+    for (int switchIndex = 0; switchIndex < switches; switchIndex++) {
         await _controlSwitch(switchIndex, true);
-
-      }
-    final heavy = systemInfoController.systemInfo.value!.heavyDutySwitches ?? 0;
-      for (int switchIndex = 0; switchIndex < heavy; switchIndex++) {
-
       }
   }
-
-
 
   Widget build(BuildContext context) {
-    final systemInfo = systemInfoController.systemInfo;
-    // Switch UI based on version
-    if (systemInfo.value?.version == 'HOBBY') {
-      return _buildHobbyUI(); // Function to create UI for Mapping version
-    } else if (systemInfo.value?.version == 'PRO') {
-      return _buildProUI(); // Function to create UI for Pro version
-    } else {
-      return const Center(child: Text('Unknown System Version'));
-    }
-  }
-
-  Widget _buildHobbyUI() {
-
 
   }
 
-  Widget _buildProUI() {
-    // ... Create UI elements specific to Pro version ...
-  }
 
 
 }
