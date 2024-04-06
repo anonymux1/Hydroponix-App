@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../services/systems_controller.dart'; // Import your controller
+import 'package:Hydroponix/services/systeminfo_controller.dart'; // Import your controller
 
 class SystemsScreen extends StatelessWidget {
  const SystemsScreen({super.key});

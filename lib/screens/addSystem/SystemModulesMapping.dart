@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
 import 'package:http/http.dart' as http; // For API
-import 'package:Hydroponix/services/systems_controller.dart';
-import 'package:Hydroponix/screens/SystemVersion.dart';
+import 'package:Hydroponix/services/systeminfo_controller.dart';
+import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
 
 class SystemModulesMappingScreen extends StatefulWidget {
   @override
@@ -22,11 +22,11 @@ class _SystemModulesMappingScreenState
   }
 
   Future<void> _startMappingProcess() async {
-    if (systemInfoController.systemInfo.value?.version == 'HOBBY') {
+    if (systemInfoController.systemsList.value.systems?.last.version == 'HOBBY') {
       await _mapHobbyModules();
-    } else if (systemInfoController.systemInfo.value?.version == 'PRO') {
+    } else if (systemInfoController.systemsList.value.systems?.last.version == 'PRO') {
       await _mapProModules();
-    } else  if (systemInfoController.systemInfo.value?.version == null || (systemInfoController.systemInfo.value?.version != 'HOBBY' && systemInfoController.systemInfo.value?.version != 'PRO')) {
+    } else  if (systemInfoController.systemsList.value.systems?.last.version == null || (systemInfoController.systemsList.value.systems?.last.version != 'HOBBY' && systemInfoController.systemsList.value.systems?.last.version != 'PRO')) {
       return showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -37,7 +37,7 @@ class _SystemModulesMappingScreenState
             TextButton(
               onPressed: () {
                 Navigator.pop(context); // Close the dialog
-                Get.to(() => SystemVersionScreen());
+                Get.to(() => SystemInfoScreen());
               },
               child: const Text('RECHECK'),
             ),
@@ -85,17 +85,16 @@ class _SystemModulesMappingScreenState
 
   Future<void> _mapProModules() async {
     // Implementation in next step
-    final switches = systemInfoController.systemInfo.value!.switches ?? 0;
-    var modulesList = systemInfoController.systemInfo.value!.modules;
+    final switches = systemInfoController.systemsList.value.systems?.last.switches ?? 0;
+    var modulesList = systemInfoController.systemsList.value.systems?.last.modules;
     for (int switchIndex = 0; switchIndex < switches; switchIndex++) {
         await _controlSwitch(switchIndex, true);
       }
   }
 
+  @override
   Widget build(BuildContext context) {
-
+    // TODO: implement build
+    throw UnimplementedError();
   }
-
-
-
 }

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:Hydroponix/services/provisioning_controller.dart';
-import 'package:Hydroponix/screens/SystemVersion.dart';
+import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
 
 class SystemProvisioningScreen extends StatefulWidget {
   @override
@@ -66,7 +66,7 @@ class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
               // Show success dialog after the UI rebuilds
               _showMyDialog('Success', 'Provisioning Successful!');
               Timer(const Duration(milliseconds: 500), () { // Timer
-                Get.to(() => SystemVersionScreen());
+                Get.to(() => SystemInfoScreen());
               });
             });
             return Center(child: CircularProgressIndicator()); // Temporary

@@ -1,17 +1,20 @@
 import 'dart:convert';
-import 'package:Hydroponix/screens/SystemModulesMapping.dart';
+import 'package:Hydroponix/screens/addSystem/SystemModulesMapping.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
 import 'package:http/http.dart' as http; // For API calls
-import 'package:Hydroponix/services/systems_controller.dart';
+import 'package:Hydroponix/services/systeminfo_controller.dart';
 
-class SystemVersionScreen extends StatefulWidget {
+import 'SystemModulesSelection.dart';
+
+class SystemInfoScreen extends StatefulWidget {
   @override
-  _SystemVersionScreenState createState() => _SystemVersionScreenState();
+  _SystemInfoScreenState createState() => _SystemInfoScreenState();
 }
 
-class _SystemVersionScreenState extends State<SystemVersionScreen> {
+class _SystemInfoScreenState extends State<SystemInfoScreen> {
   final SystemInfoController systemInfoController = Get.find();
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -25,11 +28,11 @@ class _SystemVersionScreenState extends State<SystemVersionScreen> {
       final response = await http.get(url);
       if (response.statusCode == 200) {
         // Parse the response (Assuming JSON)
-        final parsedData = jsonDecode(response.body);
+        final parsedData = jsonDecode(response.body); // JSON key:value - version: "pro/hobby", sensors: "comma separated", switches: "int"
         setState(() {
-          systemInfoController
-              .updateSystemInfo(parsedData); // Update controller
+          systemInfoController.updateSystemInfo(parsedData); // Update controller
         });
+        isLoading = false;
       } else {
         // Handle error (e.g., display a message)
         await showDialog(
@@ -75,25 +78,26 @@ class _SystemVersionScreenState extends State<SystemVersionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("System Sensors")),
+      appBar: AppBar(title: Text("System Information")),
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
-    if (systemInfo.isLoading) {
+    if (isLoading) {
       return Center(child: CircularProgressIndicator());
     } else {
       return Column(
         children: [
-          Text("Detected Version: ${systemInfoController.version}"),
-          Text("Number of Switches: "),
+          Text("Detected Version: ${systemInfoController.systemsList.value.systems?.last.version}"),
+          Text("Number of Switches: ${systemInfoController.systemsList.value.systems?.last.switches}"),
+          Text("Number of Heavy Duty Switches: ${systemInfoController.systemsList.value.systems?.last.heavySwitches}"),
           Expanded(
             child: ListView.builder(
-                itemCount: systemInfo.sensors.length,
+                itemCount: systemInfoController.systemsList.value.systems?.last.sensors?.values.length ?? 0,
                 itemBuilder: (context, index) {
-                  final sensorName = _systemInfo.sensors.keys.toList()[index];
-                  final isPresent = _systemInfo.sensors[sensorName]!;
+                  final sensorName = systemInfoController.systemsList.value.systems?.last.sensors?.keys.toList()[index] ?? '';
+                  final isPresent = systemInfoController.systemsList.value.systems?.last.sensors?[sensorName] ?? false;
                   List<Widget> widgets = [
                     ListTile(
                       title: Text(sensorName),
@@ -102,10 +106,10 @@ class _SystemVersionScreenState extends State<SystemVersionScreen> {
                           : Icon(Icons.close, color: Colors.red),
                     ),
                   ];
-                  if (_systemInfo.version == 'HOBBY') {
+                  if (systemInfoController.systemsList.value.systems?.last.version == 'HOBBY') {
                     widgets.add(Text(
                         'Plug in both the air and water pumps & place the water pump and the air stone in the nutrient reservoir'));
-                  } else if (_systemInfo.version == 'PRO') {
+                  } else if (systemInfoController.systemsList.value.systems?.last.version == 'PRO') {
                     widgets.add(Text('Plug in all the modules for your system.'));
                     widgets.add(Text('In the light duty switches, plug in air pump, water pump, LED lights, humidifier'));
                     widgets.add(Text('In the heavy duty switches, plug in water heater, water chiller, Desert Air Cooler / AC'));
@@ -116,9 +120,9 @@ class _SystemVersionScreenState extends State<SystemVersionScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (systemInfoController.systemInfo.value?.version == 'HOBBY') {
+              if (systemInfoController.systemsList.value.systems?.last.version == 'HOBBY') {
                 Get.to(() => SystemModulesMappingScreen());
-              } else if (systemInfoController.systemInfo.value?.version == 'PRO') {
+              } else if (systemInfoController.systemsList.value.systems?.last.version == 'PRO') {
                 Get.to(() => SystemModulesSelectionScreen());
               }
             },

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../services/systems_controller.dart'; // Import your controller
+import '../services/systeminfo_controller.dart'; // Import your controller
 
 class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key});
