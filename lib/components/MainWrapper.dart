@@ -37,7 +37,7 @@ class MainWrapper extends StatelessWidget {
   Widget _buildCurrentScreen() {
     switch (navigationController.currentPageIndex) {
       case 0:
-        return const HomeScreen();
+        return HomeScreen();
       case 1:
         return const SystemsScreen();
       case 2:
@@ -45,7 +45,7 @@ class MainWrapper extends StatelessWidget {
       case 3:
         return const ShopScreen();
       default:
-        return const HomeScreen(); // Fallback
+        return HomeScreen(); // Fallback
     }
   }
 }

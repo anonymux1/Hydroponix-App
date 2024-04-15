@@ -24,6 +24,9 @@ dependencies:
   uuid: ^4.3.3
   cloud_firestore: ^4.16.0
   connectivity_plus: ^6.0.1
+  shared_preferences: ^2.2.2
+  sqflite: ^2.3.3
+
 
 dev_dependencies:
   flutter_test:

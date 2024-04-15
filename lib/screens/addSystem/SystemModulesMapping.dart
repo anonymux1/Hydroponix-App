@@ -1,10 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
 import 'package:http/http.dart' as http; // For API
 import 'package:Hydroponix/services/systeminfo_controller.dart';
 import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
 
+import '../../services/systemmodulesmapping_controller.dart';
+
 class SystemModulesMappingScreen extends StatefulWidget {
+final String? systemId;
+  const SystemModulesMappingScreen(this.systemId, {Key? key}) : super(key: key); // Constructor
+
   @override
   _SystemModulesMappingScreenState createState() =>
       _SystemModulesMappingScreenState();
@@ -12,21 +18,38 @@ class SystemModulesMappingScreen extends StatefulWidget {
 
 class _SystemModulesMappingScreenState
     extends State<SystemModulesMappingScreen> {
-  final SystemInfoController systemInfoController = Get.find();
+  final SystemModulesMappingController systemModulesMappingController = Get.find();
   Map<int, String> moduleMappings = {}; // To store switch-module relationships
 
   @override
   void initState() {
     super.initState();
+    _fetchModuleMappings(); // Potentially fetch mappings based on systemId
     _startMappingProcess(); // Check on initialization and show dialog if needed
   }
 
+  Future<void> _fetchModuleMappings() async {
+    if (widget.systemId != null) { // Check if systemId is not null
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('moduleMappings')
+          .where('systemId', isEqualTo: widget.systemId)
+          .get();
+
+      setState(() {
+        moduleMappings = querySnapshot.docs.fold<Map<int, String>>(
+            {}, (map, doc) =>
+        map
+          ..putIfAbsent(doc['switchNumber'], () => doc['moduleName']));
+      });
+    }
+  }
+
   Future<void> _startMappingProcess() async {
-    if (systemInfoController.systemsList.value.systems?.last.version == 'HOBBY') {
+    if (systemModulesMappingController.systemsList.value.systems?.last.version == 'HOBBY') {
       await _mapHobbyModules();
-    } else if (systemInfoController.systemsList.value.systems?.last.version == 'PRO') {
+    } else if (systemModulesMappingController.systemsList.value.systems?.last.version == 'PRO') {
       await _mapProModules();
-    } else  if (systemInfoController.systemsList.value.systems?.last.version == null || (systemInfoController.systemsList.value.systems?.last.version != 'HOBBY' && systemInfoController.systemsList.value.systems?.last.version != 'PRO')) {
+    } else  if (systemModulesMappingController.systemsList.value.systems?.last.version == null || (systemInfoController.systemsList.value.systems?.last.version != 'HOBBY' && systemInfoController.systemsList.value.systems?.last.version != 'PRO')) {
       return showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -72,6 +95,7 @@ class _SystemModulesMappingScreenState
                 ),
               ],
             ),
+
       );
       if (moduleType != null || await Future.delayed(const Duration(seconds: 5)))
         await _controlSwitch(0, false);
@@ -81,6 +105,7 @@ class _SystemModulesMappingScreenState
           moduleMappings[1] = 'Water Pump';
         else if(moduleType == 'Water Pump')
           moduleMappings[1] = 'Air Pump';
+
   }
 
   Future<void> _mapProModules() async {

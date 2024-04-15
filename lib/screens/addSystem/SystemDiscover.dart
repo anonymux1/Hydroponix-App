@@ -33,7 +33,8 @@ class _SystemDiscoverScreenState extends State<SystemDiscoverScreen> {
         _scanForDevice();
       } else {
         // Handle permission denial
-        // Display an error message or instructions to the user
+        // Display an error message or instructions to the user'
+        // take user to settings
       }
     }
   }
@@ -44,6 +45,7 @@ class _SystemDiscoverScreenState extends State<SystemDiscoverScreen> {
       var connectivityResult = await (Connectivity().checkConnectivity());
 
       if (connectivityResult != ConnectivityResult.wifi) {
+        //TODO - take user to settings
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -82,30 +84,7 @@ class _SystemDiscoverScreenState extends State<SystemDiscoverScreen> {
         return;
       }
 
-      // Start Wi-Fi Scan
-      final isScanning = await WiFiScan.instance.startScan();
-      if (!isScanning) {
-        final canScan =
-            await WiFiScan.instance.canStartScan(askPermissions: true);
-        if (canScan != CanStartScan.yes) {
-          // Handle the case where scanning is not supported or permissions are not granted
-          await showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text("Scanning Error"),
-              content: Text(
-                  "Either Wi-Fi scanning is not supported on your device or necessary permissions are not granted."), // Adjust this message as needed
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text("OK"),
-                ),
-              ],
-            ),
-          );
-          return; // Stop the process
-        }
-      }
+
 
       // Get Scan Results
       List<WiFiAccessPoint> accessPoints =
@@ -116,7 +95,7 @@ class _SystemDiscoverScreenState extends State<SystemDiscoverScreen> {
           .firstWhereOrNull((network) => network.ssid == "Hydroponix");
 
       if (hydroNetwork != null) {
-        isDeviceFound(true);
+        isDeviceFound.value = true;
         // Attempt connection to Hydroponix network
         await WiFiForIoTPlugin.connect(hydroNetwork.ssid,
             security: NetworkSecurity.NONE);

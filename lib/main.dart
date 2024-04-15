@@ -1,3 +1,4 @@
+import 'package:Hydroponix/services/systeminfo_controller.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -23,6 +24,8 @@ void main() async {
   notificationsHandler.setupNotifications();
 
   Get.put(NotificationController()); // Initialize NotificationController
+  Get.put(SystemInfoController());
+
 
   runApp(GetMaterialApp(home: const MyApp()));
 }

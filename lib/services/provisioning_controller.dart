@@ -9,8 +9,8 @@ import '../models/System.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class provisioningController extends GetxController {
-  Rx<SystemsList> systemsList = Rx(
-      SystemsList(systems: [])); // Rx for reactivity
+  Rx<SystemsList> systemsList =
+      Rx(SystemsList(systems: [])); // Rx for reactivity
   final isLoading = false.obs;
   final isProvisioned = false.obs;
   final isSaved = false.obs;
@@ -51,10 +51,13 @@ class provisioningController extends GetxController {
     }
   }
 
-  Future<void> sendCredentials(String Name,
-      String ssid,
-      String password,) async {
-    final systemId = systemsList.value.systems?.last.systemId; // Assuming newest system
+  Future<void> sendCredentials(
+    String Name,
+    String ssid,
+    String password,
+  ) async {
+    final systemId =
+        systemsList.value.systems?.last.systemId; // Assuming newest system
     systemsList.value.systems?.last.Name = Name;
     systemsList.value.systems?.last.ssid = ssid;
     systemsList.value.systems?.last.password = password;
@@ -77,15 +80,14 @@ class provisioningController extends GetxController {
         // Handle successful provisioning
         isProvisioned(true);
         await _saveToFirestore(); // Save to Firestore
-
       } else {
         error.value = 'Something went wrong. Please try again.';
       }
-    } on HttpException { // Catch HTTP errors specifically
+    } on HttpException {
+      // Catch HTTP errors specifically
       error.value = 'Something went wrong. Please try again.';
     } finally {
       isLoading(false);
+    }
   }
 }
-
-  }

@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:Hydroponix/screens/addSystem/SystemModulesMapping.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
+import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:http/http.dart' as http; // For API calls
 import 'package:Hydroponix/services/systeminfo_controller.dart';
-
 import 'SystemModulesSelection.dart';
 
 class SystemInfoScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class SystemInfoScreen extends StatefulWidget {
 
 class _SystemInfoScreenState extends State<SystemInfoScreen> {
   final SystemInfoController systemInfoController = Get.find();
-  bool isLoading = true;
+  var isLoading = true.obs;
 
   @override
   void initState() {
@@ -29,10 +29,8 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
       if (response.statusCode == 200) {
         // Parse the response (Assuming JSON)
         final parsedData = jsonDecode(response.body); // JSON key:value - version: "pro/hobby", sensors: "comma separated", switches: "int"
-        setState(() {
-          systemInfoController.updateSystemInfo(parsedData); // Update controller
-        });
-        isLoading = false;
+        systemInfoController.updateSystemInfo(parsedData); // Update controller
+        isLoading.value = false;
       } else {
         // Handle error (e.g., display a message)
         await showDialog(
@@ -94,7 +92,7 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
           Text("Number of Heavy Duty Switches: ${systemInfoController.systemsList.value.systems?.last.heavySwitches}"),
           Expanded(
             child: ListView.builder(
-                itemCount: systemInfoController.systemsList.value.systems?.last.sensors?.values.length ?? 0,
+                itemCount: systemInfoController.systemsList.value.systems?.last.sensors?.length ?? 0,
                 itemBuilder: (context, index) {
                   final sensorName = systemInfoController.systemsList.value.systems?.last.sensors?.keys.toList()[index] ?? '';
                   final isPresent = systemInfoController.systemsList.value.systems?.last.sensors?[sensorName] ?? false;
@@ -121,9 +119,9 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
           ElevatedButton(
             onPressed: () {
               if (systemInfoController.systemsList.value.systems?.last.version == 'HOBBY') {
-                Get.to(() => SystemModulesMappingScreen());
+                Get.to(() => SystemModulesMappingScreen(systemInfoController.systemsList.value.systems?.last.systemId));
               } else if (systemInfoController.systemsList.value.systems?.last.version == 'PRO') {
-                Get.to(() => SystemModulesSelectionScreen());
+                Get.to(() => SystemModulesSelectionScreen(systemInfoController.systemsList.value.systems?.last.systemId));
               }
             },
             child: const Text('NEXT'),
