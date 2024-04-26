@@ -3,8 +3,6 @@ class SystemLog {
   String eventType; // 'sensor_reading', 'module_change' , etc.
   String dataType; //Sensor or Module Name
   String eventData;
-
-
   SystemLog({
     required this.timestamp,
     required this.eventType,

@@ -1,15 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:Hydroponix/screens/addSystem/SystemProvisioning.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
 import 'package:http/http.dart' as http; // For API
-import 'package:Hydroponix/services/systeminfo_controller.dart';
 import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
-
+import '../../models/SystemList.dart';
 import '../../services/systemmodulesmapping_controller.dart';
 
 class SystemModulesMappingScreen extends StatefulWidget {
-final String? systemId;
-  const SystemModulesMappingScreen(this.systemId, {Key? key}) : super(key: key); // Constructor
+  final SystemList? userSystems;
+  const SystemModulesMappingScreen(this.userSystems, {Key? key})
+      : super(key: key); // Constructor
 
   @override
   _SystemModulesMappingScreenState createState() =>
@@ -18,38 +18,37 @@ final String? systemId;
 
 class _SystemModulesMappingScreenState
     extends State<SystemModulesMappingScreen> {
-  final SystemModulesMappingController systemModulesMappingController = Get.find();
-  Map<int, String> moduleMappings = {}; // To store switch-module relationships
+  final SystemModulesMappingController systemModulesMappingController =
+      Get.find();
+  static const List<String> _modulesList = [
+    'Air Pump',
+    'Water Pump',
+    'Nutrient Chiller',
+    'Nutrient Heater',
+    'Desert Air Cooler',
+    'Humidifier',
+    'Air Conditioner',
+    'LED Light Strip',
+    'UV Sterilizer'
+  ];
+  String? selectedItem = 'Air Pump';
 
   @override
   void initState() {
     super.initState();
-    _fetchModuleMappings(); // Potentially fetch mappings based on systemId
+    // _fetchModuleMappings(); // Potentially fetch mappings based on systemId
     _startMappingProcess(); // Check on initialization and show dialog if needed
   }
 
-  Future<void> _fetchModuleMappings() async {
-    if (widget.systemId != null) { // Check if systemId is not null
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('moduleMappings')
-          .where('systemId', isEqualTo: widget.systemId)
-          .get();
-
-      setState(() {
-        moduleMappings = querySnapshot.docs.fold<Map<int, String>>(
-            {}, (map, doc) =>
-        map
-          ..putIfAbsent(doc['switchNumber'], () => doc['moduleName']));
-      });
-    }
-  }
-
   Future<void> _startMappingProcess() async {
-    if (systemModulesMappingController.systemsList.value.systems?.last.version == 'HOBBY') {
+    var length = widget.userSystems?.getSystemList()?.length;
+    if (widget.userSystems?.getSystemList()?[length!].version == 'HOBBY') {
       await _mapHobbyModules();
-    } else if (systemModulesMappingController.systemsList.value.systems?.last.version == 'PRO') {
+    } else if (widget.userSystems?.getSystemList()?[length!].version == 'PRO') {
       await _mapProModules();
-    } else  if (systemModulesMappingController.systemsList.value.systems?.last.version == null || (systemInfoController.systemsList.value.systems?.last.version != 'HOBBY' && systemInfoController.systemsList.value.systems?.last.version != 'PRO')) {
+    } else if (widget.userSystems?.getSystemList()?[length!].version == null ||
+        (widget.userSystems?.getSystemList()?[length!].version != 'HOBBY' &&
+            widget.userSystems?.getSystemList()?[length!].version != 'PRO')) {
       return showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -60,7 +59,7 @@ class _SystemModulesMappingScreenState
             TextButton(
               onPressed: () {
                 Navigator.pop(context); // Close the dialog
-                Get.to(() => SystemInfoScreen());
+                Get.to(() => SystemInfoScreen(widget.userSystems));
               },
               child: const Text('RECHECK'),
             ),
@@ -77,49 +76,135 @@ class _SystemModulesMappingScreenState
   }
 
   Future<void> _mapHobbyModules() async {
-      await _controlSwitch(0, true);
-      final moduleType = await showDialog<String>(
-        context: context,
-        builder: (context) =>
-            AlertDialog(
-              title: const Text('Identify Module'),
-              content: const Text('Which Pump turned ON?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, 'Water Pump'),
-                  child: const Text('Water Pump'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, 'Air Pump'),
-                  child: const Text('Air Pump'),
-                ),
-              ],
-            ),
-
-      );
-      if (moduleType != null || await Future.delayed(const Duration(seconds: 5)))
-        await _controlSwitch(0, false);
-        if (moduleType != null)
-        moduleMappings[0] = moduleType;
-        if (moduleType == 'Air Pump')
-          moduleMappings[1] = 'Water Pump';
-        else if(moduleType == 'Water Pump')
-          moduleMappings[1] = 'Air Pump';
-
+    await _controlSwitch(0, true);
+    final moduleTypeAlert = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Identify Pump'),
+        content: const Text('Which Pump turned ON?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'Water Pump'),
+            child: const Text('Water Pump'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'Air Pump'),
+            child: const Text('Air Pump'),
+          ),
+        ],
+      ),
+    );
+    var length = widget.userSystems?.getSystemList()?.length;
+    if (moduleTypeAlert != null ||
+        await Future.delayed(const Duration(seconds: 5)))
+      await _controlSwitch(0, false);
+    if (moduleTypeAlert == 'Air Pump')
+      widget.userSystems?.getSystemList()?[length!].modules = {
+        'Air Pump': 0,
+        'Water Pump': 1
+      };
+    else if (moduleTypeAlert == 'Water Pump')
+      widget.userSystems?.getSystemList()?[length!].modules = {
+        'Water Pump': 0,
+        'Air Pump': 1
+      };
   }
 
   Future<void> _mapProModules() async {
     // Implementation in next step
-    final switches = systemInfoController.systemsList.value.systems?.last.switches ?? 0;
-    var modulesList = systemInfoController.systemsList.value.systems?.last.modules;
-    for (int switchIndex = 0; switchIndex < switches; switchIndex++) {
-        await _controlSwitch(switchIndex, true);
+    var length = widget.userSystems
+        ?.getSystemList()
+        ?.length;
+    final switches =
+        widget.userSystems?.getSystemList()?[length!].switches ?? 0;
+    final heavySwitches =
+        widget.userSystems?.getSystemList()?[length!].heavySwitches ?? 0;
+    for (int switchIndex = 0;
+    switchIndex < (switches + heavySwitches);
+    switchIndex++) {
+      await _controlSwitch(switchIndex, true);
+      final moduleTypeAlert = await showDialog<String>(
+        context: context,
+        builder: (context) =>
+            AlertDialog(
+              title: const Text('Select Module that turned ON'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButton<String>(
+                    value: selectedItem,
+                    items: _modulesList.map((String item) {
+                      return DropdownMenuItem<String>(
+                        value: item,
+                        child: Text(item),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      // Use a nullable type for onChanged
+                      if (newValue != null) {
+                        selectedItem = newValue;
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, selectedItem),
+                  child: const Text('Add More Modules'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, null),
+                  child: const Text('Done'),
+                ),
+              ],
+            ),
+      );
+      if (moduleTypeAlert != null ||
+          await Future.delayed(const Duration(seconds: 5))) {
+        var module;
+        module.addAll(selectedItem, switchIndex);
+        widget.userSystems
+            ?.getSystemList()?[length!]
+            .modules
+            ?.addEntries(module);
       }
+    }
   }
+
+    Widget _buildBody() {
+      var length = widget.userSystems?.getSystemList()?.length;
+      return Column(children: [
+        Expanded(
+          child: ListView.builder(
+              itemCount:
+              widget.userSystems?.getSystemList()?[length!].modules?.length ?? 0,
+              itemBuilder: (context, index) {
+                var ModuleName = widget.userSystems
+                    ?.getSystemList()?[length!]
+                    .modules?[index]
+                    .toString();
+                List<Widget> widgets = [
+                  ListTile(
+                    title: Text(ModuleName!),
+                  ),
+                ];
+                TextButton(
+                  onPressed: () => Get.to(SystemProvisioningScreen(widget.userSystems)),
+                  child: const Text('NEXT'),
+                );
+                return Column(
+                    children: widgets); // Return the widgets within a Column
+              }),
+        )
+      ]);
+    }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return Scaffold(
+      appBar: AppBar(title: Text("System Information")),
+      body: _buildBody(),
+    );
   }
 }

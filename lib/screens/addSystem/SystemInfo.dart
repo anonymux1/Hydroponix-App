@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'package:Hydroponix/screens/addSystem/SystemModulesMapping.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
-import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:http/http.dart' as http; // For API calls
 import 'package:Hydroponix/services/systeminfo_controller.dart';
-import 'SystemModulesSelection.dart';
+
+import '../../models/SystemList.dart';
 
 class SystemInfoScreen extends StatefulWidget {
+  final SystemList? userSystems;
+  const SystemInfoScreen(this.userSystems, {Key? key}) : super(key: key); // Constructor
+
   @override
   _SystemInfoScreenState createState() => _SystemInfoScreenState();
 }
@@ -29,7 +32,7 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
       if (response.statusCode == 200) {
         // Parse the response (Assuming JSON)
         final parsedData = jsonDecode(response.body); // JSON key:value - version: "pro/hobby", sensors: "comma separated", switches: "int"
-        systemInfoController.updateSystemInfo(parsedData); // Update controller
+        systemInfoController.updateSystemInfo(widget.userSystems, parsedData); // Update controller
         isLoading.value = false;
       } else {
         // Handle error (e.g., display a message)
@@ -82,32 +85,28 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
   }
 
   Widget _buildBody() {
-    if (isLoading) {
+    if (isLoading.value) {
       return Center(child: CircularProgressIndicator());
     } else {
       return Column(
         children: [
-          Text("Detected Version: ${systemInfoController.systemsList.value.systems?.last.version}"),
-          Text("Number of Switches: ${systemInfoController.systemsList.value.systems?.last.switches}"),
-          Text("Number of Heavy Duty Switches: ${systemInfoController.systemsList.value.systems?.last.heavySwitches}"),
+          Text("Detected Version: ${systemInfoController.newSystem?.version}"),
+          Text("Number of Switches: ${systemInfoController.newSystem?.switches}"),
+          Text("Number of Heavy Duty Switches: ${systemInfoController.newSystem?.heavySwitches}"),
           Expanded(
             child: ListView.builder(
-                itemCount: systemInfoController.systemsList.value.systems?.last.sensors?.length ?? 0,
+                itemCount: systemInfoController.newSystem?.sensors?.length ?? 0,
                 itemBuilder: (context, index) {
-                  final sensorName = systemInfoController.systemsList.value.systems?.last.sensors?.keys.toList()[index] ?? '';
-                  final isPresent = systemInfoController.systemsList.value.systems?.last.sensors?[sensorName] ?? false;
+                  var sensorName = systemInfoController.newSystem?.sensors?[index].toString();
                   List<Widget> widgets = [
                     ListTile(
-                      title: Text(sensorName),
-                      trailing: isPresent
-                          ? Icon(Icons.check, color: Colors.green)
-                          : Icon(Icons.close, color: Colors.red),
+                      title: Text(sensorName!),
                     ),
                   ];
-                  if (systemInfoController.systemsList.value.systems?.last.version == 'HOBBY') {
+                  if (systemInfoController.newSystem?.version == 'HOBBY') {
                     widgets.add(Text(
                         'Plug in both the air and water pumps & place the water pump and the air stone in the nutrient reservoir'));
-                  } else if (systemInfoController.systemsList.value.systems?.last.version == 'PRO') {
+                  } else if (systemInfoController.newSystem?.version == 'PRO') {
                     widgets.add(Text('Plug in all the modules for your system.'));
                     widgets.add(Text('In the light duty switches, plug in air pump, water pump, LED lights, humidifier'));
                     widgets.add(Text('In the heavy duty switches, plug in water heater, water chiller, Desert Air Cooler / AC'));
@@ -118,12 +117,8 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              if (systemInfoController.systemsList.value.systems?.last.version == 'HOBBY') {
-                Get.to(() => SystemModulesMappingScreen(systemInfoController.systemsList.value.systems?.last.systemId));
-              } else if (systemInfoController.systemsList.value.systems?.last.version == 'PRO') {
-                Get.to(() => SystemModulesSelectionScreen(systemInfoController.systemsList.value.systems?.last.systemId));
-              }
-            },
+                Get.to(() => SystemModulesMappingScreen(systemInfoController.systemList));
+              },
             child: const Text('NEXT'),
           ),
         ],

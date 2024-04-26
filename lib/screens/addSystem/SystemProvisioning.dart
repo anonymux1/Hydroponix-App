@@ -2,9 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:Hydroponix/services/provisioning_controller.dart';
-import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
+import '../../models/SystemList.dart';
 
 class SystemProvisioningScreen extends StatefulWidget {
+  final SystemList? userSystems;
+  const SystemProvisioningScreen(this.userSystems, {Key? key})
+      : super(key: key); // Constructor
+
   @override
   _SystemProvisioningScreenState createState() =>
       _SystemProvisioningScreenState();
@@ -12,15 +16,18 @@ class SystemProvisioningScreen extends StatefulWidget {
 
 class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
   final _controller = Get.put(provisioningController());
-  final networkSSIDController = TextEditingController();
-  final systemNameController = TextEditingController(); // Controller for the generated system ID
-  final networkPasswordController = TextEditingController();
+  final networkSSID = TextEditingController();
+  final systemName = TextEditingController();
+  final networkPassword = TextEditingController();
+  final airPumpDuration = TextEditingController();
+  final airPumpInterval = TextEditingController();
+  final waterPumpDuration = TextEditingController();
+  final waterPumpInterval = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _controller
-        .generateSystemId(); // Generate the system ID on screen initialization
+    // _controller.generateSystemId(); // Generate the system ID on screen initialization
   }
 
   Future<void> _showMyDialog(String title, String message) async {
@@ -53,62 +60,59 @@ class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Setup Your Hydroponix System"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0), // Add padding for better UI
-        child: Obx(() {
-          if (_controller.isLoading.value) {
-            return Center(child: CircularProgressIndicator());
-          } else if (_controller.isProvisioned.value) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Show success dialog after the UI rebuilds
-              _showMyDialog('Success', 'Provisioning Successful!');
-              Timer(const Duration(milliseconds: 500), () { // Timer
-                Get.to(() => SystemInfoScreen());
-              });
-            });
-            return Center(child: CircularProgressIndicator()); // Temporary
-          } else if (_controller.error.value.isNotEmpty) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              // Show error dialog after the UI rebuilds
-              _showMyDialog('Error', _controller.error.value);
-              _controller.error(''); // Reset the error
-            });
-            return Center(child: CircularProgressIndicator()); // Temporary
-          } else {
-            return Column(
+        appBar: AppBar(
+          title: Text("Setup Your Hydroponix System"),
+        ),
+        body: Padding(
+            padding: const EdgeInsets.all(16.0), // Add padding for better UI
+            child: Column(
               children: [
                 if (_controller.isLoading.value) CircularProgressIndicator(),
                 TextFormField(
-                  controller: systemNameController,
+                  controller: systemName,
                   decoration: InputDecoration(labelText: "System Name:"),
                 ),
                 TextFormField(
-                  controller: networkSSIDController,
+                  controller: networkSSID,
                   decoration: InputDecoration(labelText: "WiFi Name:"),
                 ),
                 SizedBox(height: 10),
                 TextFormField(
-                  controller: networkPasswordController,
+                  controller: networkPassword,
                   decoration: InputDecoration(labelText: "WiFi Password"),
+                ),
+                TextFormField(
+                  controller: airPumpDuration,
+                  decoration: InputDecoration(labelText: "Air Pump Duration"),
+                ),
+                TextFormField(
+                  controller: airPumpInterval,
+                  decoration: InputDecoration(labelText: "Air Pump Interval"),
+                ),
+                TextFormField(
+                  controller: waterPumpDuration,
+                  decoration: InputDecoration(labelText: "Water Pump Duration"),
+                ),
+                TextFormField(
+                  controller: waterPumpInterval,
+                  decoration: InputDecoration(labelText: "Water Pump Interval"),
                 ),
                 SizedBox(height: 10),
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => _controller.sendCredentials(
-                    systemNameController.text,
-                    networkSSIDController.text,
-                    networkPasswordController.text,
+                  onPressed: () => _controller.setCredentials(
+                    widget.userSystems,
+                    systemName.text,
+                    networkSSID.text,
+                    networkPassword.text,
+                    airPumpDuration.text,
+                    airPumpInterval.text,
+                    waterPumpDuration.text,
+                    waterPumpInterval.text,
                   ),
                   child: Text("Provision"),
                 ),
               ],
-            );
-          }
-        }),
-      ),
-    );
+            )));
   }
 }

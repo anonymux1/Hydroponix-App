@@ -1,23 +1,22 @@
-import 'package:Hydroponix/models/SystemsList.dart';
+import 'package:Hydroponix/models/System.dart';
 import 'package:Hydroponix/screens/addSystem/SystemDiscover.dart';
 import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../services/home_controller.dart';
+import 'package:Hydroponix/services/home_controller.dart';
 
 class HomeScreen extends StatefulWidget {
 @override
 _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<SystemInfoScreen> {
-  final HomeController homeController = Get.find();
-  late SystemsList? userSystems;
+class _HomeScreenState extends State<HomeScreen> {
+  final HomeController homeController = Get.put(HomeController());
+  late RxList<System>? userSystems;
 
   @override
   void initState() {
     super.initState();
-    userSystems = homeController.updateSharedPref().value;
   }
 
   @override
@@ -42,7 +41,7 @@ class _HomeScreenState extends State<SystemInfoScreen> {
 
                   ElevatedButton(
                     onPressed: () {
-                      Get.to(() => SystemDiscoverScreen());
+                      Get.to(() => SystemDiscoverScreen(homeController.userSystems));
                     },
                     child: const Text('ADD NEW SYSTEM'),
                   ),

@@ -27,48 +27,24 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         systemId TEXT NOT NULL,
         Name TEXT NOT NULL,
-        versionId TEXT NOT NULL,
-        )
-    ''');
-    await db.execute('''
-      CREATE TABLE systems_versions (
-        versionId INTEGER PRIMARY KEY AUTOINCREMENT,
-        systemId TEXT NOT NULL,
         version TEXT NOT NULL,
-        switches INT NOT NULL,
-        heavySwitches INT NOT NULL,
-        peristalticPumpsCount INT NOT NULL,
-        FOREIGN KEY (systemId) REFERENCES systems_list(systemId) 
-        )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE system_sensors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        systemId TEXT NOT NULL, 
-        sensorType TEXT NOT NULL, // SensorType in enum SensorType { EC, pH, temp, DO, ambientTemp, ambientHumidity }
-        FOREIGN KEY (systemId) REFERENCES systems_list(systemId) 
-      )
-    ''');
-
-    await db.execute('''
-      CREATE TABLE system_config (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        systemId TEXT NOT NULL, 
+        switches INTEGER NOT NULL,
+        heavySwitches INTEGER NOT NULL,
+        peristalticPumpsCount INTEGER NOT NULL,      
+        sensorType TEXT NOT NULL, // comma separated SensorType in enum SensorType { EC, pH, temp, DO, ambientTemp, ambientHumidity }
         ssid TEXT NOT NULL,
         password TEXT NOT NULL,
-        waterPumpDuration int NOT NULL,
-        airPumpDuration int NOT NULL,
-        waterPumpInterval int NOT NULL,
-        airPumpInterval int NOT NULL,
+        waterPumpDuration INTEGER NOT NULL,
+        airPumpDuration INTEGER NOT NULL,
+        waterPumpInterval INTEGER NOT NULL,
+        airPumpInterval INTEGER NOT NULL,
         phMax real NOT NULL,
         phMin real NOT NULL,
         nutrientTempMax real NOT NULL,
         nutrientTempMin real NOT NULL,
         ambientTempMax real NOT NULL,
         ambientTempMin real NOT NULL,
-        FOREIGN KEY (systemId) REFERENCES systems_list(systemId) 
-      )
+        )
     ''');
 
     await db.execute('''

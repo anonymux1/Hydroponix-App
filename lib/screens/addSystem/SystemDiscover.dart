@@ -1,3 +1,4 @@
+import 'package:Hydroponix/models/SystemList.dart';
 import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -5,9 +6,12 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:wifi_scan/wifi_scan.dart';
 import 'package:get/get.dart';
-import 'package:Hydroponix/screens/addSystem/SystemProvisioning.dart';
+
 
 class SystemDiscoverScreen extends StatefulWidget {
+  final SystemList? userSystems;
+  const SystemDiscoverScreen(this.userSystems, {Key? key}) : super(key: key); // Constructor
+
   @override
   _SystemDiscoverScreenState createState() => _SystemDiscoverScreenState();
 }
@@ -100,7 +104,7 @@ class _SystemDiscoverScreenState extends State<SystemDiscoverScreen> {
         await WiFiForIoTPlugin.connect(hydroNetwork.ssid,
             security: NetworkSecurity.NONE);
         // await Future.delayed(Duration(milliseconds: 500));
-        Get.to(() => SystemInfoScreen()); // Navigate on success
+        Get.to(() => SystemInfoScreen(widget.userSystems)); // Navigate on success
       } else {
         // Handle the case where "Hydroponix" network not found
         await showDialog(

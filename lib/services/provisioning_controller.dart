@@ -1,29 +1,19 @@
 import 'dart:io';
+import 'package:Hydroponix/models/SystemList.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:uuid/uuid.dart';
-import 'package:Hydroponix/models/SystemsList.dart';
 import '../models/System.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class provisioningController extends GetxController {
-  Rx<SystemsList> systemsList =
-      Rx(SystemsList(systems: [])); // Rx for reactivity
+  SystemList? systemsList;
   final isLoading = false.obs;
   final isProvisioned = false.obs;
   final isSaved = false.obs;
   final error = ''.obs;
   var systemId;
-
-  Future<void> generateSystemId() async {
-    var uuid = Uuid();
-    systemId = uuid.v4();
-    System newSystem = System(systemId: systemId);
-    systemsList.value.systems?.add(newSystem); // Add new system to the list
-    systemsList.refresh(); // Update UI
-  }
 
   Future<String> _getUserId() async {
     // Retrieve the userId from Firebase Authentication
@@ -35,15 +25,13 @@ class provisioningController extends GetxController {
     }
   }
 
-  Future<void> _saveToFirestore() async {
+  Future<void> _saveToFirestore(System? newSystem) async {
     final userId = await _getUserId();
     final firestore = FirebaseFirestore.instance;
-
     // Get the newest system (assuming the one just added)
-    final newSystem = systemsList.value.systems?.last;
     if (newSystem != null) {
-      await firestore.collection('userSystems').doc(userId).set({
-        'systems': FieldValue.arrayUnion([newSystem.toJson()])
+      await firestore.collection(userId).doc('SystemsList').set({
+        'systems': FieldValue.arrayUnion([newSystem])
       }, SetOptions(merge: true)); // Merge with existing data
       isSaved(true); // Update status in controller
     } else {
@@ -51,22 +39,35 @@ class provisioningController extends GetxController {
     }
   }
 
-  Future<void> sendCredentials(
-    String Name,
-    String ssid,
-    String password,
-  ) async {
-    final systemId =
-        systemsList.value.systems?.last.systemId; // Assuming newest system
-    systemsList.value.systems?.last.Name = Name;
-    systemsList.value.systems?.last.ssid = ssid;
-    systemsList.value.systems?.last.password = password;
+  Future<void> setCredentials(
+      SystemList? userSystems,
+      String Name,
+      String ssid,
+      String pwd,
+      String airPumpDuration,
+      String airPumpInt,
+      String waterPumpDuration,
+      String waterPumpInt) async {
+    var length = userSystems?.getSystemList()?.length;
+    userSystems?.getSystemList()?[length!].Name = Name;
+    userSystems?.getSystemList()?[length!].ssid = ssid;
+    userSystems?.getSystemList()?[length!].password = pwd;
+    userSystems?.getSystemList()?[length!].airPumpInterval = airPumpInt as int?;
+    userSystems?.getSystemList()?[length!].airPumpDuration = airPumpDuration as int?;
+    userSystems?.getSystemList()?[length!].waterPumpInterval = waterPumpInt as int?;
+    userSystems?.getSystemList()?[length!].waterPumpDuration = waterPumpDuration as int?;
 
     final payload = jsonEncode({
-      'ssid': ssid,
-      'password': password,
+      'ssid': userSystems?.getSystemList()?[length!].ssid,
+      'password': userSystems?.getSystemList()?[length!].password,
       'userId': await _getUserId(),
-      'systemId': systemId,
+      'systemId': userSystems?.getSystemList()?[length!].systemId,
+      'airPumpInterval': userSystems?.getSystemList()?[length!].airPumpInterval,
+      'airPumpDuration': userSystems?.getSystemList()?[length!].airPumpDuration,
+      'waterPumpInterval': userSystems?.getSystemList()?[length!].waterPumpInterval,
+      'waterPumpDuration': userSystems?.getSystemList()?[length!].waterPumpDuration,
+      'nutrientTempMin': userSystems?.getSystemList()?[length!].nutrientTempMin,
+      'nutrientTempMax': userSystems?.getSystemList()?[length!].nutrientTempMax,
     });
     try {
       isLoading(true);
@@ -79,7 +80,7 @@ class provisioningController extends GetxController {
       if (response.statusCode == 200) {
         // Handle successful provisioning
         isProvisioned(true);
-        await _saveToFirestore(); // Save to Firestore
+        await _saveToFirestore(userSystems?.getSystemList()?[length!]); // Save to Firestore
       } else {
         error.value = 'Something went wrong. Please try again.';
       }
