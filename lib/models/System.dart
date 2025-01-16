@@ -1,19 +1,12 @@
-import 'dart:ui';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-enum versionName { HOME, PRO }
-
-enum SensorType { EC, pH, temp, DO, ambientTemp, ambientHumidity }
 
 class System {
-  String systemId;
+  String? systemId;
   String? Name;
-  versionName? version;
+  String? version;
   int? switches;
   int? heavySwitches;
-  int? peristalticPumpsCount;
-  List<SensorType>? sensors;
+  double? peristalticPumpsCount;
+  List<String>? sensors;
   Map<String, int>? modules;
   String? ssid;
   String? password;
@@ -23,13 +16,14 @@ class System {
   int? airPumpInterval;
   double? phMax;
   double? phMin;
-  double? nutrientTempMax;
-  double? nutrientTempMin;
-  double? ambientTempMax;
-  double? ambientTempMin;
+  int? nutrientTempMax;
+  int? nutrientTempMin;
+  int? ambientTempMax;
+  int? ambientTempMin;
+  List<System>? systems;
 
   System({
-    required this.systemId,
+    this.systemId,
     this.Name,
     this.version,
     this.sensors,
@@ -46,38 +40,41 @@ class System {
     this.nutrientTempMin,
     this.ambientTempMax,
     this.ambientTempMin,
+    this.peristalticPumpsCount,
+    this.switches,
+    this.heavySwitches
   });
 
   factory System.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> snapshot,
-    SnapshotOptions? options,
+    Map<String, dynamic> data,
   ) {
-    final data = snapshot.data();
     return System(
-      systemId: data?['systemId'],
-      Name: data?['Name'],
-      version: data?['version'],
-      ssid: data?['ssid'],
-      password: data?['password'],
-      waterPumpDuration: data?['waterPumpDuration'],
-      airPumpDuration: data?['airPumpDuration'],
-      phMax: data?['phMax'],
-      phMin: data?['phMin'],
-      nutrientTempMax: data?['nutrientTempMax'],
-      nutrientTempMin: data?['nutrientTempMin'],
-      ambientTempMax: data?['ambientTempMax'],
-      ambientTempMin: data?['ambientTempMin'],
-      waterPumpInterval: data?['waterPumpInterval'],
-      airPumpInterval: data?['airPumpInterval'],
-      sensors:
-          data?['sensors'] is Iterable ? List.from(data?['sensors']) : null,
-      modules: data?['modules'] is Iterable ? Map.from(data?['modules']) : null,
+      systemId: data['systemId'],
+      Name: data['Name'],
+      version: data['version'],
+      ssid: data['ssid'],
+      password: data['password'],
+      waterPumpDuration: data['waterPumpDuration'],
+      airPumpDuration: data['airPumpDuration'],
+      phMax: data['phMax'],
+      phMin: data['phMin'],
+      peristalticPumpsCount: data['peristalticPumpsCount'],
+      nutrientTempMax: data['nutrientTempMax'],
+      nutrientTempMin: data['nutrientTempMin'],
+      ambientTempMax: data['ambientTempMax'],
+      ambientTempMin: data['ambientTempMin'],
+      waterPumpInterval: data['waterPumpInterval'],
+      airPumpInterval: data['airPumpInterval'],
+      sensors: List.from(data['sensors']),
+      modules: Map.from(data['modules']),
+      switches: data['switches'],
+      heavySwitches: data['heavySwitches']
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
-      if (systemId != null) "systemId": systemId,
+      if(systemId != null) "systemId": systemId,
       if (Name != null) "Name": Name,
       if (version != null) "version": version,
       if (ssid != null) "ssid": ssid,
@@ -94,6 +91,7 @@ class System {
       if (airPumpInterval != null) "airPumpInterval": airPumpInterval,
       if (sensors != null) "sensors": sensors,
       if (modules != null) "modules": modules,
+      if (peristalticPumpsCount!=null) "peristalticPumpsCount": peristalticPumpsCount
     };
   }
 }

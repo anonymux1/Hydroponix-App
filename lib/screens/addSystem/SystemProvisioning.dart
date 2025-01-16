@@ -23,6 +23,8 @@ class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
   final airPumpInterval = TextEditingController();
   final waterPumpDuration = TextEditingController();
   final waterPumpInterval = TextEditingController();
+  String _sel = "";
+  late List<DropdownMenuItem<String>>? networks = _controller.getNetworks() as List<DropdownMenuItem<String>>?;
 
   @override
   void initState() {
@@ -56,7 +58,6 @@ class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,6 +72,16 @@ class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
                 TextFormField(
                   controller: systemName,
                   decoration: InputDecoration(labelText: "System Name:"),
+                ),
+                const Text("Select a Network"),
+                DropdownButton<String>
+                  (
+                    value: _sel,
+                    items: networks,
+                    onChanged: (String? newValue) {
+                                setState(() {
+                                _sel = newValue!;
+                                });}
                 ),
                 TextFormField(
                   controller: networkSSID,

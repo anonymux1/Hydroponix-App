@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import '../models/notifications.dart';
+import '../models/Notifications.dart';
 
 class NotificationProvider extends ChangeNotifier {
   final List<MyNotification> _notifications = [];

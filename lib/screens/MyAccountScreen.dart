@@ -1,8 +1,11 @@
 import 'package:Hydroponix/screens/NotificationsScreen.dart';
+import 'package:Hydroponix/services/cart_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:Hydroponix/services/notifications_controller.dart';
+
+import 'CartScreen.dart';
 
 class MyAccountScreen extends StatefulWidget {
   final RxString? profilePhotoUrl;
@@ -56,8 +59,9 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                   _buildListTile('Notifications', Icons.notifications,
                       notificationCount: Get.find<NotificationController>()
                           .unreadNotificationCount),
-                  _buildListTile('My Cart', Icons.shopping_cart,notificationCount: Get.find<NotificationController>()
-                      .unreadNotificationCount),
+                  _buildListTile('My Shopping Cart', Icons.shopping_cart,
+                      notificationCount:
+                          Get.find<CartController>().productsCount),
                   _buildListTile('My Orders', Icons.receipt_long),
                   _buildListTile('Sign Out', Icons.logout),
                 ],
@@ -82,8 +86,11 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
         // Handle navigation to the appropriate screen for each list item
         switch (title) {
           case 'Notifications':
-        Get.to(() => NotificationsScreen());
-        break;
+            Get.to(() => NotificationsScreen());
+            break;
+          case 'My Shopping Cart':
+            Get.to(() => CartScreen());
+            break;
           // ... handle other cases
           case 'Sign Out':
             _signOut();
@@ -92,6 +99,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
       },
     );
   }
+
   void _signOut() async {
     final confirmed = await Get.dialog(
       AlertDialog(

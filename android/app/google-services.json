@@ -22,6 +22,22 @@
           }
         },
         {
+          "client_id": "643683883154-o28k9d5plfhbf1mup92h0lk2huf7hrdk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hydroponix.hydroponix",
+            "certificate_hash": "4b26839e87eaa340b025422459d2c36b57c702b5"
+          }
+        },
+        {
+          "client_id": "643683883154-qhcgjgh0uqhg3jhoift4t0eespdaqmqq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hydroponix.hydroponix",
+            "certificate_hash": "62c98ba484158215953600fdabdc5f9201fa9a8e"
+          }
+        },
+        {
           "client_id": "643683883154-vpghm4vir7ckgsfn9g9detm7m8cou10k.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -1,3 +1,4 @@
+import 'package:Hydroponix/services/cart_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -5,6 +6,7 @@ import 'package:Hydroponix/screens/NotificationsScreen.dart';
 import 'package:Hydroponix/services/notifications_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:Hydroponix/screens/MyAccountScreen.dart';
+import '../screens/CartScreen.dart';
 import '../services/navigation_controller.dart';
 //import 'package:http/http.dart' as http;
 //import 'dart:io';
@@ -13,14 +15,17 @@ import '../services/navigation_controller.dart';
 
 class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
   final NavigationController navigationController; // Add this
-  TitleBarWidget({Key? key, required this.navigationController})
+  final CartController cartController;
+
+  TitleBarWidget(
+      {Key? key,
+      required this.navigationController,
+      required this.cartController})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return kIsWeb
-        ? _buildWebAppBar(context)
-        : _buildMobileAppBar(context);
+    return kIsWeb ? _buildWebAppBar(context) : _buildMobileAppBar(context);
   }
 
   Widget _buildWebAppBar(BuildContext context) {
@@ -28,14 +33,16 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row( // Left-aligned Hydroponix icon and title
+          Row(
+            // Left-aligned Hydroponix icon and title
             children: [
               const Icon(Icons.grass), // Placeholder icon
               const SizedBox(width: 10),
               const Text('Hydroponix'),
             ],
           ),
-          Row( // Right-aligned icons (camera, notification, profile)
+          Row(
+            // Right-aligned icons (camera, notification, profile)
             children: [
               IconButton(
                 icon: const Icon(Icons.camera_alt),
@@ -44,22 +51,36 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
               Stack(
                 children: [
                   IconButton(
+                    icon: const Icon(Icons.shopping_cart_sharp),
+                    onPressed: () => _handleCartIconPressed(context),
+                  ),
+                  GetBuilder<CartController>(builder: (controller) {
+                    return Badge(
+                      label: Text(controller.productsCount.toString()),
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      alignment: Alignment.topRight,
+                      isLabelVisible: controller.productsCount > 0,
+                    );
+                  })
+                ],
+              ),
+              Stack(
+                children: [
+                  IconButton(
                     icon: const Icon(Icons.notifications),
                     onPressed: () => _handleNotificationsIconPressed(context),
                   ),
-                  GetBuilder<NotificationController>(
-                      builder: (controller) {
-                        return Badge(
-                          label: Text(
-                              controller.unreadNotificationCount.toString()),
-                          backgroundColor: Colors.red,
-                          textColor: Colors.white,
-                          alignment: Alignment.topRight,
-                          isLabelVisible: controller.unreadNotificationCount >
-                              0,
-                        );
-                      }
-                  )
+                  GetBuilder<NotificationController>(builder: (controller) {
+                    return Badge(
+                      label:
+                          Text(controller.unreadNotificationCount.toString()),
+                      backgroundColor: Colors.red,
+                      textColor: Colors.white,
+                      alignment: Alignment.topRight,
+                      isLabelVisible: controller.unreadNotificationCount > 0,
+                    );
+                  })
                 ],
               ),
               GetBuilder<NavigationController>(
@@ -68,13 +89,13 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
                     onTap: () => _handleProfileAvatarPressed(context),
                     child: controller.profilePhotoUrl.isNotEmpty
                         ? CircleAvatar(
-                      backgroundImage: NetworkImage(
-                          controller.profilePhotoUrl.value),
-                    )
+                            backgroundImage:
+                                NetworkImage(controller.profilePhotoUrl.value),
+                          )
                         : CircleAvatar(
-                      backgroundImage:
-                      AssetImage('assets/images/profile_avatar.jpg'),
-                    ),
+                            backgroundImage:
+                                AssetImage('assets/images/profile_avatar.jpg'),
+                          ),
                   );
                 },
               ),
@@ -87,7 +108,8 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
 
   Widget _buildMobileAppBar(BuildContext context) {
     return AppBar(
-      title: Row( // Left-aligned Hydroponix icon and title
+      title: Row(
+        // Left-aligned Hydroponix icon and title
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           const Icon(Icons.grass), // Placeholder icon
@@ -103,20 +125,35 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
         Stack(
           children: [
             IconButton(
+              icon: const Icon(Icons.shopping_cart_sharp),
+              onPressed: () => _handleCartIconPressed(context),
+            ),
+            GetBuilder<CartController>(builder: (controller) {
+              return Badge(
+                label: Text(controller.productsCount.toString()),
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                alignment: Alignment.topRight,
+                isLabelVisible: controller.productsCount > 0,
+              );
+            })
+          ],
+        ),
+        Stack(
+          children: [
+            IconButton(
               icon: const Icon(Icons.notifications),
               onPressed: () => _handleNotificationsIconPressed(context),
             ),
-            GetBuilder<NotificationController>(
-                builder: (controller) {
-                  return Badge(
-                    label: Text(controller.unreadNotificationCount.toString()),
-                    backgroundColor: Colors.red,
-                    textColor: Colors.white,
-                    alignment: Alignment.topRight,
-                    isLabelVisible: controller.unreadNotificationCount > 0,
-                  );
-                }
-            )
+            GetBuilder<NotificationController>(builder: (controller) {
+              return Badge(
+                label: Text(controller.unreadNotificationCount.toString()),
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                alignment: Alignment.topRight,
+                isLabelVisible: controller.unreadNotificationCount > 0,
+              );
+            })
           ],
         ),
         GetBuilder<NavigationController>(
@@ -125,12 +162,13 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
               onTap: () => _handleProfileAvatarPressed(context),
               child: controller.profilePhotoUrl.isNotEmpty
                   ? CircleAvatar(
-                backgroundImage: NetworkImage(controller.profilePhotoUrl.value),
-              )
+                      backgroundImage:
+                          NetworkImage(controller.profilePhotoUrl.value),
+                    )
                   : CircleAvatar(
-                backgroundImage:
-                AssetImage('assets/images/profile_avatar.jpg'),
-              ),
+                      backgroundImage:
+                          AssetImage('assets/images/profile_avatar.jpg'),
+                    ),
             );
           },
         ),
@@ -160,13 +198,17 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _handleNotificationsIconPressed(BuildContext context) {
-    Get.to(() =>
-        NotificationsScreen()); // Assuming you've created a NotificationsScreen widget
+    Get.to(() => NotificationsScreen()); // Assuming you've created a NotificationsScreen widget
+  }
+
+  void _handleCartIconPressed(BuildContext context) {
+    Get.to(() => CartScreen()); // Assuming you've created a NotificationsScreen widget
   }
 
   void _handleProfileAvatarPressed(BuildContext context) {
     Get.to(() => MyAccountScreen(profilePhotoUrl: navigationController.profilePhotoUrl));
   }
+
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

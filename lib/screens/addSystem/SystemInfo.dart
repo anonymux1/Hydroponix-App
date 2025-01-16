@@ -26,7 +26,7 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
   }
 
   Future<void> _fetchSystemData() async {
-    final url = Uri.http('192.168.1.1', '/systeminfo');
+    final url = Uri.http('192.168.1.1', '/systemInfo');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -105,7 +105,7 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
                   ];
                   if (systemInfoController.newSystem?.version == 'HOBBY') {
                     widgets.add(Text(
-                        'Plug in both the air and water pumps & place the water pump and the air stone in the nutrient reservoir'));
+                        'Plug in both the air and water pumps. Place the water pump and the air stone in the nutrient reservoir'));
                   } else if (systemInfoController.newSystem?.version == 'PRO') {
                     widgets.add(Text('Plug in all the modules for your system.'));
                     widgets.add(Text('In the light duty switches, plug in air pump, water pump, LED lights, humidifier'));

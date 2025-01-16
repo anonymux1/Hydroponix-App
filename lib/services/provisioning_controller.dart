@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:Hydroponix/models/SystemList.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -31,7 +32,7 @@ class provisioningController extends GetxController {
     // Get the newest system (assuming the one just added)
     if (newSystem != null) {
       await firestore.collection(userId).doc('SystemsList').set({
-        'systems': FieldValue.arrayUnion([newSystem])
+        'Systems': FieldValue.arrayUnion([newSystem])
       }, SetOptions(merge: true)); // Merge with existing data
       isSaved(true); // Update status in controller
     } else {
@@ -56,7 +57,13 @@ class provisioningController extends GetxController {
     userSystems?.getSystemList()?[length!].airPumpDuration = airPumpDuration as int?;
     userSystems?.getSystemList()?[length!].waterPumpInterval = waterPumpInt as int?;
     userSystems?.getSystemList()?[length!].waterPumpDuration = waterPumpDuration as int?;
-
+    var airPumpSwitch, waterPumpSwitch;
+    userSystems?.getSystemList()?[length!].modules?.forEach((moduleName, switchNumber) {
+      if (moduleName == "Air Pump")
+        airPumpSwitch = switchNumber;
+      else if (moduleName == "Water Pump")
+        waterPumpSwitch = switchNumber;
+    });
     final payload = jsonEncode({
       'ssid': userSystems?.getSystemList()?[length!].ssid,
       'password': userSystems?.getSystemList()?[length!].password,
@@ -68,11 +75,13 @@ class provisioningController extends GetxController {
       'waterPumpDuration': userSystems?.getSystemList()?[length!].waterPumpDuration,
       'nutrientTempMin': userSystems?.getSystemList()?[length!].nutrientTempMin,
       'nutrientTempMax': userSystems?.getSystemList()?[length!].nutrientTempMax,
+      'airPumpSwitch': airPumpSwitch,
+      'waterPumpSwitch': waterPumpSwitch,
     });
     try {
       isLoading(true);
       // Construct API endpoint URL using ESP8266 IP address
-      final url = Uri.http('192.168.1.1', '/provision');
+      final url = Uri.http('192.168.1.1', '/updateConfig');
       // Create payload
       // Send request (using http package)
       final response = await http.post(url, body: payload);
@@ -90,5 +99,29 @@ class provisioningController extends GetxController {
     } finally {
       isLoading(false);
     }
+  }
+
+  Future<List<DropdownMenuItem<String>>?>? getNetworks() async {
+    try {
+      final url = Uri.http('192.168.1.1', '/getNetworks');
+      final response = await http.post(url, body:"");
+      if (response.statusCode == 200) {
+        final parsedData = jsonDecode(response.body);
+        final ssids = (parsedData["Networks"]
+                      as List<dynamic>).map((ssid)
+                      => ssid as String).toList();
+        List<DropdownMenuItem<String>> dropdownMenuItems = ssids.map((ssid) {
+          return DropdownMenuItem<String>(
+            value: ssid,
+            child: Text(ssid),
+          );
+        }).toList();
+        return dropdownMenuItems;
+      }
+    }on HttpException {
+      // Catch HTTP errors specifically
+      error.value = 'Something went wrong. Please try again.';
+    }
+    return null;
   }
 }

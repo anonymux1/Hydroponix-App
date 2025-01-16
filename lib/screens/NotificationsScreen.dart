@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:Hydroponix/models/notifications.dart';
 import 'package:Hydroponix/services/notifications_controller.dart';
 
 class NotificationsScreen extends StatelessWidget {

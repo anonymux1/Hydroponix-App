@@ -88,8 +88,6 @@ class _SystemDiscoverScreenState extends State<SystemDiscoverScreen> {
         return;
       }
 
-
-
       // Get Scan Results
       List<WiFiAccessPoint> accessPoints =
           await WiFiScan.instance.getScannedResults();

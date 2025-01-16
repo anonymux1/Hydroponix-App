@@ -1,35 +1,20 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class SystemLog {
-  String timestamp;
+  Timestamp timestamp;
   String eventType; // 'sensor_reading', 'module_change' , etc.
   String dataType; //Sensor or Module Name
-  String eventData;
+  int eventData;
   SystemLog({
     required this.timestamp,
     required this.eventType,
     required this.eventData,
     required this.dataType,
-    /*ph,
-    EC,
-    nutrientTemp,
-    ambientTemp,
-    ambientHumidity,
-    waterPumpRuns,
-    airPumpRuns,
-    nutrientPumpARuns,
-    nutrientPumpBRuns,
-    nutrientPumpCRuns,
-    phUpPumpRuns,
-    phDownPumpRuns,
-    nutrientHeaterRuns,
-    nutrientChillerRuns,
-    humidifierRuns,
-    coolerRuns,
-    ACRuns,*/
 });
 
   factory SystemLog.fromJson(Map<String, dynamic> json) {
     return SystemLog(
-      timestamp: json['timestamp'],
+      timestamp: json['timeStamp'],
       eventType: json['eventType'],
       dataType: json['dataType'],
       eventData: json['eventData'],

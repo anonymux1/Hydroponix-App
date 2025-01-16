@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import '../models/notifications.dart';
+import '../models/Notifications.dart';
 
 class NotificationController extends GetxController {
   final RxList<MyNotification> _notifications = <MyNotification>[].obs; // Make list observable

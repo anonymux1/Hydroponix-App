@@ -1,4 +1,4 @@
-// models/user.dart
+// models/User.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class User {

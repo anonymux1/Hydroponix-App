@@ -1,5 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import '../models/notifications.dart';
+import '../models/Notifications.dart';
 import 'package:get/get.dart';
 import 'notifications_controller.dart';
 
@@ -14,8 +14,6 @@ class NotificationsHandler {
       message: message.data['message'] ?? 'No message content',
       timestamp: DateTime.now(),
     );
-
-
     // Add to GetX Controller
     Get.find<NotificationController>().addNotification(notification);
   }
@@ -23,7 +21,6 @@ class NotificationsHandler {
 
   void setupNotifications() async {
     // ... request permissions and get FCM token (your existing code)
-
     // Foreground Notifications
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
 // Extract data
