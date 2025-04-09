@@ -14,27 +14,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "643683883154-hnl070dqqg11pnmb9ad4cqkq6psqi2q7.apps.googleusercontent.com",
+          "client_id": "643683883154-3fsu51dq3fsrrn91366gqtm5bt1a0had.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.hydroponix.hydroponix",
-            "certificate_hash": "dc03d1f6531a815d8d4513ce4c927507638f1b12"
+            "certificate_hash": "46b95f2ac79b0288603efa0458ff7083c1fc7dd5"
           }
         },
         {
-          "client_id": "643683883154-o28k9d5plfhbf1mup92h0lk2huf7hrdk.apps.googleusercontent.com",
+          "client_id": "643683883154-5du0uethu73hggqkomsgdr3fe6d62c2n.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.hydroponix.hydroponix",
-            "certificate_hash": "4b26839e87eaa340b025422459d2c36b57c702b5"
-          }
-        },
-        {
-          "client_id": "643683883154-qhcgjgh0uqhg3jhoift4t0eespdaqmqq.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.hydroponix.hydroponix",
-            "certificate_hash": "62c98ba484158215953600fdabdc5f9201fa9a8e"
+            "certificate_hash": "8485f884ada8fde715b9a308a42380054e3c19c2"
           }
         },
         {
