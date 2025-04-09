@@ -1,10 +1,10 @@
 import 'package:Hydroponix/screens/addSystem/SystemProvisioning.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
-import 'package:http/http.dart' as http; // For API
 import 'package:Hydroponix/screens/addSystem/SystemInfo.dart';
 import '../../models/SystemList.dart';
 import '../../services/systemmodulesmapping_controller.dart';
+import 'SystemAddWifiSwitches.dart';
 
 class SystemModulesMappingScreen extends StatefulWidget {
   final SystemList? userSystems;
@@ -32,6 +32,7 @@ class _SystemModulesMappingScreenState
     'UV Sterilizer'
   ];
   String? selectedItem = 'Air Pump';
+  bool isMappingComplete = false;
 
   @override
   void initState() {
@@ -43,9 +44,9 @@ class _SystemModulesMappingScreenState
   Future<void> _startMappingProcess() async {
     var length = widget.userSystems?.getSystemList()?.length;
     if (widget.userSystems?.getSystemList()?[length!].version == 'HOBBY') {
-      await _mapHobbyModules();
+      await systemModulesMappingController.mapHobbyModules(widget.userSystems);
     } else if (widget.userSystems?.getSystemList()?[length!].version == 'PRO') {
-      await _mapProModules();
+      await systemModulesMappingController.mapProModules(widget.userSystems, _modulesList, selectedItem, _updateUI);
     } else if (widget.userSystems?.getSystemList()?[length!].version == null ||
         (widget.userSystems?.getSystemList()?[length!].version != 'HOBBY' &&
             widget.userSystems?.getSystemList()?[length!].version != 'PRO')) {
@@ -67,137 +68,76 @@ class _SystemModulesMappingScreenState
         ),
       );
     }
+    isMappingComplete = true;
+    setState(() {});
   }
 
-  Future<void> _controlSwitch(int? switchIndex, bool state) async {
-    final url = Uri.http('192.168.1.1', '/control',
-        {'switch': '$switchIndex', 'state': '$state'});
-    await http.post(url);
-  }
 
-  Future<void> _mapHobbyModules() async {
-    await _controlSwitch(0, true);
-    final moduleTypeAlert = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Identify Pump'),
-        content: const Text('Which Pump turned ON?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'Water Pump'),
-            child: const Text('Water Pump'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'Air Pump'),
-            child: const Text('Air Pump'),
-          ),
-        ],
-      ),
-    );
-    var length = widget.userSystems?.getSystemList()?.length;
-    if (moduleTypeAlert != null ||
-        await Future.delayed(const Duration(seconds: 5)))
-      await _controlSwitch(0, false);
-    if (moduleTypeAlert == 'Air Pump')
-      widget.userSystems?.getSystemList()?[length!].modules = {
-        'Air Pump': 0,
-        'Water Pump': 1
-      };
-    else if (moduleTypeAlert == 'Water Pump')
-      widget.userSystems?.getSystemList()?[length!].modules = {
-        'Water Pump': 0,
-        'Air Pump': 1
-      };
-  }
-
-  Future<void> _mapProModules() async {
-    // Implementation in next step
-    var length = widget.userSystems
-        ?.getSystemList()
-        ?.length;
-    final switches =
-        widget.userSystems?.getSystemList()?[length!].switches ?? 0;
-    final heavySwitches =
-        widget.userSystems?.getSystemList()?[length!].heavySwitches ?? 0;
-    for (int switchIndex = 0;
-    switchIndex < (switches + heavySwitches);
-    switchIndex++) {
-      await _controlSwitch(switchIndex, true);
-      final moduleTypeAlert = await showDialog<String>(
-        context: context,
-        builder: (context) =>
-            AlertDialog(
-              title: const Text('Select Module that turned ON'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButton<String>(
-                    value: selectedItem,
-                    items: _modulesList.map((String item) {
-                      return DropdownMenuItem<String>(
-                        value: item,
-                        child: Text(item),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      // Use a nullable type for onChanged
-                      if (newValue != null) {
-                        selectedItem = newValue;
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, selectedItem),
-                  child: const Text('Add More Modules'),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(context, null),
-                  child: const Text('Done'),
-                ),
-              ],
-            ),
-      );
-      if (moduleTypeAlert != null ||
-          await Future.delayed(const Duration(seconds: 5))) {
-        var module;
-        module.addAll(selectedItem, switchIndex);
-        widget.userSystems
-            ?.getSystemList()?[length!]
-            .modules
-            ?.addEntries(module);
-      }
-    }
+  void _updateUI() {
+    setState(() {});
   }
 
     Widget _buildBody() {
       var length = widget.userSystems?.getSystemList()?.length;
-      return Column(children: [
-        Expanded(
-          child: ListView.builder(
-              itemCount:
-              widget.userSystems?.getSystemList()?[length!].modules?.length ?? 0,
+      return Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: (widget.userSystems?.getSystemList()?[length!].modules?.length ?? 0) + 2,
               itemBuilder: (context, index) {
-                var ModuleName = widget.userSystems
-                    ?.getSystemList()?[length!]
-                    .modules?[index]
-                    .toString();
-                List<Widget> widgets = [
-                  ListTile(
-                    title: Text(ModuleName!),
-                  ),
-                ];
-                TextButton(
-                  onPressed: () => Get.to(SystemProvisioningScreen(widget.userSystems)),
-                  child: const Text('NEXT'),
-                );
-                return Column(
-                    children: widgets); // Return the widgets within a Column
-              }),
-        )
-      ]);
+                if (index == 0) {
+                  return ListTile(
+                    title: Text("Detected Version: ${widget.userSystems?.getSystemList()?[length!].version}"),
+                    subtitle: Text("Number of Switches: ${widget.userSystems?.getSystemList()?[length!].switches}"),
+                  );
+                } else if (index < (widget.userSystems?.getSystemList()?[length!].modules?.length ?? 0) + 1) {
+                  var moduleName = widget.userSystems?.getSystemList()?[length!].modules?.keys.elementAt(index - 1);
+                  var switchNumber = widget.userSystems?.getSystemList()?[length!].modules?.values.elementAt(index - 1);
+                  return ListTile(
+                    title: Text(moduleName!),
+                    subtitle: Text("Switch Number: $switchNumber"),
+                  );
+                } else {
+                  return ListTile(
+                    title: Text("Press Next to Confirm or Back to Reconfigure"),
+                  );
+                }
+              },
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              bool? pairWifiSwitches = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Pair Wi-Fi Switches'),
+                  content: const Text('Do you want to pair any Wi-Fi switches?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Yes'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('No'),
+                    ),
+                  ],
+                ),
+              );
+              if (pairWifiSwitches == true) {
+                Get.to(() => SystemAddWifiSwitchesScreen(widget.userSystems));
+              } else {
+                Get.to(() => SystemProvisioningScreen(widget.userSystems));
+              }
+            },
+            child: const Text('NEXT'),
+          ),
+          TextButton(
+            onPressed: _startMappingProcess,
+            child: const Text('BACK'),
+          ),
+        ],
+      );
     }
 
   @override

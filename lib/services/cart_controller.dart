@@ -1,89 +1,135 @@
-// import 'dart:math';
-// import 'package:flutter/material.dart' show Color;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:Hydroponix/models/Product.dart';
-
-extension IterableExtension<T> on Iterable<T> {
-  Iterable<E> mapWithIndex<E>(E Function(int index, T value) f) {
-    return Iterable.generate(length).map((i) => f(i, elementAt(i)));
-  }
-}
-
-extension StringExtension on String {
-  String get nextLine {
-    if (length < 15) {
-      return this;
-    } else {
-      return "${substring(0, 15)} \n${substring(15, length)}";
-    }
-  }
-}
+import 'package:Hydroponix/models/cartProduct.dart';
 
 class CartController extends GetxController {
-
-  List<Product> cartProducts = <Product>[].obs;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   RxDouble totalPrice = 0.0.obs;
-  bool isPriceOff(Product product) => product.off != null;
-  bool get isEmptyCart => cartProducts.isEmpty;
-  int get productsCount => cartProducts.length; // Expose count
+  RxInt totalItems = 0.obs;
+  RxList<CartProduct> cartProducts = <CartProduct>[].obs;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  void increaseItemQuantity(Product product) {
-    product.quantity++;
-    calculateTotalPrice();
-    update();
+  @override
+  void onInit() {
+    super.onInit();
+    initializeCart();
   }
 
-  void addToCart(Product product) {
-    product.quantity++;
-    cartProducts.add(product);
-    cartProducts.assignAll(cartProducts);
-    calculateTotalPrice();
+  Future<void> initializeCart() async {
+      final user = _auth.currentUser;
+      if (user == null) {
+        print("User is not logged in");
+        return;
+      }
+      final firestore = FirebaseFirestore.instance;
+      final userDoc = await firestore.collection('users').doc(user.uid);
+      final docSnapshot = await userDoc.get();
+      if (docSnapshot.exists && docSnapshot.data()?['cart'] != null) {
+        List<dynamic> cartData = docSnapshot.data()?['cart'];
+        List<CartProduct> validCartProducts = [];
+        bool cartModified = false; // Track if any items were removed
+        for (var item in cartData) {
+          CartProduct cartProduct = CartProduct.fromFirestore(item);
+          DocumentSnapshot productSnapshot = await _firestore           // 🔍 Fetch product from Firestore
+              .collection('products')
+              .doc(cartProduct.productId)
+              .get();
+
+          if (!productSnapshot.exists) {
+            print("Warning: Product ${cartProduct.productId} no longer exists.");
+            cartModified = true; // Mark cart as modified
+            continue; // Skip this item
+          }
+          Map<String, dynamic> productData = productSnapshot.data() as Map<String, dynamic>;            // 🔍 Check if variant exists
+          List<dynamic> variants = productData['variants'] ?? [];
+          bool variantExists = variants.any((variant) => variant['variantId'] == cartProduct.variantId);
+          if (!variantExists) {
+            print("Warning: Variant ${cartProduct.variantId} for product ${cartProduct.productId} not found.");
+            cartModified = true; // Mark cart as modified
+            continue; // Skip this item
+          }
+          validCartProducts.add(cartProduct); // ✅ Add to valid cart list
+          totalItems.value++; // ✅ Update total items and price
+          totalPrice.value += (productData['price'] as num) * cartProduct.quantity;
+        }
+        cartProducts.value = validCartProducts; // ✅ Update cartProducts with only valid products
+        if (cartModified) {     // ✅ Save cart to Firestore only if it was modified
+          await saveCartToFirestore();
+        }
+      }
   }
 
-  void removeFromCart(Product product) {
-    cartProducts.remove(product);
-    calculateTotalPrice();
-    update();
+  Future<void> addToCart(String productId, String variantId) async {
+    int index = cartProducts.indexWhere(
+            (item) => item.productId == productId && item.variantId == variantId);
+    if (index != -1) {
+      // If product variant exists, increment quantity
+      cartProducts[index].quantity++;
+    } else {
+      // Add new cart item
+      cartProducts.add(CartProduct(productId: productId, variantId: variantId, quantity: 1));
+    }
+    await saveCartToFirestore();
   }
 
-  void decreaseItemQuantity(Product product) {
-    product.quantity--;
-    calculateTotalPrice();
-    update();
+  Future<void> removeFromCart(CartProduct product) async {
+    cartProducts.removeWhere((item) => item.productId == product.productId && item.variantId == product.variantId);
+    await saveCartToFirestore();
   }
 
-  void calculateTotalPrice() {
-    totalPrice.value = 0;
-    for (var element in cartProducts) {
-      if (isPriceOff(element)) {
-        totalPrice.value += element.quantity * element.off!;
+  Future<void> decreaseQuantity(String productId, String variantId) async {
+    int index = cartProducts.indexWhere(
+            (item) => item.productId == productId && item.variantId == variantId);
+
+    if (index != -1) {
+      if (cartProducts[index].quantity > 1) {
+        cartProducts[index].quantity--;
       } else {
-        totalPrice.value += element.quantity * element.price;
+        cartProducts.removeAt(index); // Remove if only 1 left
       }
+      await saveCartToFirestore();
     }
   }
 
-  String getCurrentSize(Product product) {
-    String currentSize = "";
-    if (product.sizes?.categorical != null) {
-      for (var element in product.sizes!.categorical!) {
-        if (element.isSelected) {
-          currentSize = "Size: ${element.categorical.name}";
-        }
-      }
+  Future<void> saveCartToFirestore() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _firestore.collection('users').doc(user.uid).update({
+        'cart': cartProducts.map((item) => item.toFirestore()).toList(),
+      });
     }
-
-    if (product.sizes?.numerical != null) {
-      for (var element in product.sizes!.numerical!) {
-        if (element.isSelected) {
-          currentSize = "Size: ${element.numerical}";
-        }
-      }
-    }
-    return currentSize;
   }
 
-  getCartItems() {
-    cartProducts.assignAll(cartProducts.where((item) => item.quantity > 0));
+  Future<HydroponixProduct?> fetchProductDetails(String productId) async {
+    final docSnapshot = await _firestore.collection('products').doc(productId).get();
+    if (docSnapshot.exists) {
+      return HydroponixProduct.fromJson(docSnapshot.data()!);
+    }
+    return null;
+  }
+
+  Future<RxList<HydroponixProduct>> fetchAllProducts() async {
+    RxList<HydroponixProduct> allProducts = <HydroponixProduct>[].obs;
+    for (var cartProduct in cartProducts) {
+      HydroponixProduct? product = await fetchProductDetails(cartProduct.productId);
+      if (product != null) {
+        allProducts.add(product);
+      }
+    }
+    return allProducts;
+  }
+
+  Future<void> clearCart() async {
+    cartProducts.clear();
+    totalItems.value = 0;
+    totalPrice.value = 0;
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _firestore.collection('users').doc(user.uid).update({
+        'cart': [],
+      });
+    }
   }
 }

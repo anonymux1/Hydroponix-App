@@ -48,6 +48,17 @@ class AuthGate extends StatelessWidget {
                 ),
               );
             },
+            actions: [
+              AuthStateChangeAction<SignedIn>((context, state) {
+                final user = state.user;
+                _checkAndCreateFirestoreUser(user);
+              }),
+              AuthStateChangeAction<AuthState>((context, state) {
+                // Log the error
+                if(state is AuthFailed)
+                print('Sign in failed: ${state.exception}');
+              }),
+            ],
           );
         }
     else {

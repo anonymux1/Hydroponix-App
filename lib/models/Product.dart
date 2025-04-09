@@ -1,39 +1,66 @@
-import 'ProductSizeType.dart';
-enum ProductType { all, plants, systems, hardware, produce }
-
-class Product {
-  String name;
-  double price;
-  int? off;
-  String about;
-  bool isAvailable;
-
-  // ProductSizeType? sizes;
-  int _quantity;
-  String mainImage;
+import 'package:Hydroponix/models/ProductReview.dart';
+class HydroponixProduct {
+  String id;
+  String title;
+  String description;
   List<String> images;
-  bool isFavorite;
-  double rating;
-  ProductType type;
-  ProductSizeType? sizes;
-  int get quantity => _quantity;
+  bool isAvailableForSale;
+  List<ProductVariant> variants;
+  ProductReview? reviews;
+  String category;
 
-  set quantity(int newQuantity) {
-    if (newQuantity >= 0) _quantity = newQuantity;
-  }
-
-  Product({
-    // this.sizes,
-    required this.about,
-    required this.name,
-    required this.price,
-    required this.isAvailable,
-    required this.off,
-    required int quantity,
-    required this.mainImage,
+  HydroponixProduct({
+    required this.id,
+    required this.title,
+    required this.description,
     required this.images,
-    required this.isFavorite,
-    required this.rating,
-    required this.type,
-  }) : _quantity = quantity;
+    required this.isAvailableForSale,
+    required this.variants,
+    required this.reviews,
+    required this.category
+  });
+
+  // Convert Firestore document to Product object
+  factory HydroponixProduct.fromJson(Map<String, dynamic> data) {
+    return HydroponixProduct(
+      id: data['id'],
+      title: data['title'],
+      description: data['description'],
+      images: List<String>.from(data['images'] ?? []),
+      isAvailableForSale: data['isAvailableForSale'] ?? false,
+      variants: (data['variants'] as List<dynamic>)
+          .map((variant) => ProductVariant.fromJson(variant))
+          .toList(),
+      reviews: null,
+      category: data['category'] ?? '',
+    );
+  }
+}
+
+class ProductVariant {
+  String id;
+  String title;
+  double price;
+  double? compareAtPrice;
+  bool availableForSale;
+
+  ProductVariant({
+    required this.id,
+    required this.title,
+    required this.price,
+    this.compareAtPrice,
+    required this.availableForSale,
+  });
+
+  factory ProductVariant.fromJson(Map<String, dynamic> data) {
+    return ProductVariant(
+      id: data['id'],
+      title: data['title'],
+      price: (data['price'] as num).toDouble(),
+      compareAtPrice: data['compareAtPrice'] != null
+          ? (data['compareAtPrice'] as num).toDouble()
+          : null,
+      availableForSale: data['availableForSale'] ?? false,
+    );
+  }
 }

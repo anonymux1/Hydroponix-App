@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:Hydroponix/services/cart_controller.dart';
-import '../components/animations/AnimatedSwitcherWrapper.dart';
-import '../models/Product.dart';
+import '../../components/animations/AnimatedSwitcherWrapper.dart';
+import '../../models/Product.dart';
+import 'CheckoutScreen.dart';
 
 class CartScreen extends StatelessWidget {
   final CartController controller = Get.put(CartController());
+  CartScreen({Key? key}) : super(key: key);
   PreferredSizeWidget _appBar(BuildContext context) {
     return AppBar(
       title: Text(
@@ -31,17 +33,21 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget cartList() {
+  Widget cartList(RxList<HydroponixProduct> products) {
     return SingleChildScrollView(
       child: Column(
-        children: controller.cartProducts.mapWithIndex((index, _) {
-          Product product = controller.cartProducts[index];
+        children: List.generate(products.length, (index) {
+          final product = products[index];
+          final variant = product.variants.firstWhere((variant) => variant.id == controller.cartProducts[index].variantId).title;
+          final price = product.variants.firstWhere((variant) => variant.id == controller.cartProducts[index].variantId).price;
+          final compareAtPrice = product.variants.firstWhere((variant) => variant.id == controller.cartProducts[index].variantId).compareAtPrice;
+          final availableForSale = product.variants.firstWhere((variant) => variant.id == controller.cartProducts[index].variantId).availableForSale;
           return Container(
             width: double.infinity,
             margin: const EdgeInsets.all(15),
             padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
-              color: Colors.grey[200]?.withOpacity(0.6),
+              color: Colors.grey[200]?.withValues(alpha: 0.6),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Wrap(
@@ -63,7 +69,7 @@ class CartScreen extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(5),
                         child: Image.asset(
-                          product.images[0],
+                          product.images.first,
                           width: 100,
                           height: 90,
                         ),
@@ -75,7 +81,7 @@ class CartScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      product.name.nextLine,
+                      product.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -84,25 +90,37 @@ class CartScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 5),
-                    Text(
-                      controller.getCurrentSize(product),
-                      style: TextStyle(
-                        color: Colors.black.withOpacity(0.5),
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      controller.isPriceOff(product)
-                          ? "\$${product.off}"
-                          : "\$${product.price}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 23,
-                      ),
-                    ),
-                  ],
-                ),
+                    Row(
+                      children: [
+                        Text('$variant',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Visibility(
+                          visible: compareAtPrice!=null ? compareAtPrice > price ?true:false : false,
+                          child: Text(
+                            "${compareAtPrice}",
+                            style: const TextStyle(
+                              decoration: TextDecoration.lineThrough,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        Text("${price}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                          ),
+                        ),
+                       Visibility(
+                        visible: availableForSale ? true : false,
+                        child: Text("Not available",
+                          style: TextStyle(fontWeight: FontWeight.w500,
+                          color: Colors.red),
+                        )),
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -115,7 +133,7 @@ class CartScreen extends StatelessWidget {
                       IconButton(
                         splashRadius: 10.0,
                         onPressed: () =>
-                            controller.decreaseItemQuantity(product),
+                            controller.decreaseQuantity(controller.cartProducts[index].productId, controller.cartProducts[index].variantId),
                         icon: const Icon(
                           Icons.remove,
                           color: Color(0xFFEC6813),
@@ -140,7 +158,7 @@ class CartScreen extends StatelessWidget {
                       IconButton(
                         splashRadius: 10.0,
                         onPressed: () =>
-                            controller.increaseItemQuantity(product),
+                            controller.addToCart(controller.cartProducts[index].productId, controller.cartProducts[index].variantId),
                         icon: const Icon(Icons.add, color: Color(0xFFEC6813)),
                       ),
                     ],
@@ -148,7 +166,7 @@ class CartScreen extends StatelessWidget {
                 )
               ],
             ),
-          );
+          ])]));
         }).toList(),
       ),
     );
@@ -185,14 +203,16 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget bottomBarButton() {
+  Widget bottomBarButton(bool hasProducts) {
     return SizedBox(
       width: double.infinity,
       child: Padding(
         padding: const EdgeInsets.only(left: 30, right: 30, bottom: 20),
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
-          onPressed: controller.isEmptyCart ? null : () {},
+          onPressed: hasProducts ? () {
+            Get.to(() => CheckoutScreen());
+          } : () {},
           child: const Text("Buy Now"),
         ),
       ),
@@ -201,92 +221,33 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    controller.getCartItems();
+    bool hasProducts = false;
     return Scaffold(
       appBar: _appBar(context),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: !controller.isEmptyCart ? cartList() : emptyCart(),
+            child:  FutureBuilder<RxList<HydroponixProduct>>(
+        future: controller.fetchAllProducts(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return emptyCart();
+          } else {
+            hasProducts = true;
+            return cartList(snapshot.data!);
+          }
+        },
+      ),
           ),
           bottomBarTitle(),
-          bottomBarButton()
+          bottomBarButton(hasProducts)
         ],
       ),
     );
   }
-
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text('My Shopping Cart'),
-  //     ),
-  //     body: Obx(
-  //       () => ListView.builder(
-  //         itemCount: controller.cartProducts.length,
-  //         itemBuilder: (context, index) {
-  //           final Product = controller.cartProducts[index];
-  //           return ListTile(
-  //             leading: ConstrainedBox(
-  //               constraints: BoxConstraints(
-  //                 minWidth: 44,
-  //                 minHeight: 44,
-  //                 maxWidth: 64,
-  //                 maxHeight: 64,
-  //               ),
-  //               child: Image.asset(Product.mainImage, fit: BoxFit.cover),
-  //             ),
-  //             title: Text(Product.name),
-  //             trailing: Row(
-  //               mainAxisSize: MainAxisSize.min,
-  //               children: [
-  //                 IconButton(
-  //                   icon: Icon(Icons.remove),
-  //                   onPressed: () {
-  //                     controller.decreaseItemQuantity(Product);
-  //                     if (Product.quantity == 0) {
-  //                       controller.removeFromCart(Product);
-  //                     }
-  //                   },
-  //                 ),
-  //                 Text('${Product.quantity}'),
-  //                 IconButton(
-  //                   icon: Icon(Icons.add),
-  //                   onPressed: () => controller.increaseItemQuantity(Product),
-  //                 ),
-  //               ],
-  //             ),
-  //           );
-  //         },
-  //       ),
-  //   Container(
-  //   margin: const EdgeInsets.only(bottom: 15),
-  //   padding: const EdgeInsets.symmetric(horizontal: 30),
-  //   child: Row(
-  //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //   children: [
-  //   const Text(
-  //   "Total",
-  //   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400),
-  //   ),
-  //   AnimatedSwitcherWrapper(
-  //   child: Text(
-  //   "\$${controller.totalPrice.value}",
-  //   key: ValueKey<int>(controller.totalPrice.value),
-  //   style: const TextStyle(
-  //   fontSize: 25,
-  //   fontWeight: FontWeight.w900,
-  //   color: Color(0xFFEC6813),
-  //   ),
-  //     ),
-  //   )
-  //   ]
-  //   )
-  //   )
-  //   )
-  //   );
-  // }
 }

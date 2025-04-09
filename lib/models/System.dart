@@ -20,7 +20,8 @@ class System {
   int? nutrientTempMin;
   int? ambientTempMax;
   int? ambientTempMin;
-  List<System>? systems;
+  bool? use2G;
+  // List<System>? systems;
 
   System({
     this.systemId,
@@ -42,7 +43,8 @@ class System {
     this.ambientTempMin,
     this.peristalticPumpsCount,
     this.switches,
-    this.heavySwitches
+    this.heavySwitches,
+    this.use2G
   });
 
   factory System.fromFirestore(
@@ -68,7 +70,8 @@ class System {
       sensors: List.from(data['sensors']),
       modules: Map.from(data['modules']),
       switches: data['switches'],
-      heavySwitches: data['heavySwitches']
+      heavySwitches: data['heavySwitches'],
+      use2G: data['use2G']
     );
   }
 
@@ -91,7 +94,12 @@ class System {
       if (airPumpInterval != null) "airPumpInterval": airPumpInterval,
       if (sensors != null) "sensors": sensors,
       if (modules != null) "modules": modules,
-      if (peristalticPumpsCount!=null) "peristalticPumpsCount": peristalticPumpsCount
+      if (peristalticPumpsCount!=null) "peristalticPumpsCount": peristalticPumpsCount,
+      if (switches!=null) "switches": switches,
+      if (heavySwitches!=null) "heavySwitches": heavySwitches,
+      if (use2G!=null) "use2G": use2G
     };
   }
+  Map<String, dynamic> toJson() => toFirestore();
+
 }

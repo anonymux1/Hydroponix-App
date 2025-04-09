@@ -1,4 +1,4 @@
-import 'package:Hydroponix/screens/ShopScreen.dart';
+import 'package:Hydroponix/screens/Shop/ShopScreen.dart';
 import 'package:Hydroponix/screens/HomeScreen.dart';
 import 'package:Hydroponix/screens/SystemsScreen.dart';
 import 'package:Hydroponix/screens/AnalyzeScreen.dart';

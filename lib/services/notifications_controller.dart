@@ -5,7 +5,7 @@ class NotificationController extends GetxController {
   final RxList<MyNotification> _notifications = <MyNotification>[].obs; // Make list observable
   final RxInt _unreadNotificationCount = 0.obs; // Reactive unread count
 
-  List<MyNotification> get notifications => _notifications.value; // Expose with a getter
+  List<MyNotification> get notifications => _notifications.toList(); // Expose with a getter
   int get unreadNotificationCount => _unreadNotificationCount.value; // Expose count
 
   void addNotification(MyNotification notification) {

@@ -4,8 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:Hydroponix/services/notifications_controller.dart';
-
-import 'CartScreen.dart';
+import 'package:Hydroponix/screens/Shop/CartScreen.dart';
 
 class MyAccountScreen extends StatefulWidget {
   final RxString? profilePhotoUrl;
@@ -61,7 +60,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                           .unreadNotificationCount),
                   _buildListTile('My Shopping Cart', Icons.shopping_cart,
                       notificationCount:
-                          Get.find<CartController>().productsCount),
+                          Get.find<CartController>().cartProducts.length),
                   _buildListTile('My Orders', Icons.receipt_long),
                   _buildListTile('Sign Out', Icons.logout),
                 ],

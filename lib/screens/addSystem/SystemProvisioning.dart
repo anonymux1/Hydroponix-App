@@ -1,4 +1,4 @@
-import 'dart:async';
+// import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:Hydroponix/services/provisioning_controller.dart';
@@ -32,43 +32,42 @@ class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
     // _controller.generateSystemId(); // Generate the system ID on screen initialization
   }
 
-  Future<void> _showMyDialog(String title, String message) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(title),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text(message),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // Future<void> _showMyDialog(String title, String message) async {
+  //   return showDialog<void>(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: Text(title),
+  //         content: SingleChildScrollView(
+  //           child: ListBody(
+  //             children: <Widget>[
+  //               Text(message),
+  //             ],
+  //           ),
+  //         ),
+  //         actions: <Widget>[
+  //           TextButton(
+  //             child: const Text('OK'),
+  //             onPressed: () {
+  //               Navigator.of(context).pop();
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          title: Text("Setup Your Hydroponix System"),
+          title: Text("Review your Hydroponix System Setup"),
         ),
         body: Padding(
             padding: const EdgeInsets.all(16.0), // Add padding for better UI
             child: Column(
               children: [
-                if (_controller.isLoading.value) CircularProgressIndicator(),
                 TextFormField(
                   controller: systemName,
                   decoration: InputDecoration(labelText: "System Name:"),
@@ -111,19 +110,70 @@ class _SystemProvisioningScreenState extends State<SystemProvisioningScreen> {
                 SizedBox(height: 10),
                 SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => _controller.setCredentials(
-                    widget.userSystems,
-                    systemName.text,
-                    networkSSID.text,
-                    networkPassword.text,
-                    airPumpDuration.text,
-                    airPumpInterval.text,
-                    waterPumpDuration.text,
-                    waterPumpInterval.text,
-                  ),
-                  child: Text("Provision"),
+                  onPressed: _saveAndProvision,
+                  child: Text("Confirm"),
                 ),
               ],
+
             )));
+  }
+  Future<void> _saveAndProvision() async {
+    Get.defaultDialog(
+      title: "Provisioning System",
+      content: Obx(() {
+        if (_controller.error.isNotEmpty) {
+          return Column(
+            children: [
+              Icon(Icons.error, color: Colors.red, size: 50),
+              SizedBox(height: 10),
+              Text(_controller.error.value, textAlign: TextAlign.center),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  _controller.error.value = ''; // Reset error
+                  Get.back(); // Close dialog
+                },
+                child: Text("Retry"),
+              ),
+            ],
+          );
+        } else if (!_controller.isSaved.isTrue) {
+          return Column(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 10),
+              Text(_controller.isProvisioned.isTrue
+                  ? "Updating Config on the Server"
+                  : "Updating Config on Hydroponix System"),
+            ],
+          );
+        } else {
+          return Column(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 50),
+              SizedBox(height: 10),
+              Text("Hydroponix System Configured Successfully"),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Get.offAllNamed('/home'),
+                child: Text("Home"),
+              ),
+            ],
+          );
+        }
+      }),
+      barrierDismissible: false,
+    );
+
+    await _controller.setCredentials(
+      widget.userSystems,
+      systemName.text,
+      networkSSID.text,
+      networkPassword.text,
+      airPumpDuration.text,
+      airPumpInterval.text,
+      waterPumpDuration.text,
+      waterPumpInterval.text,
+    );
   }
 }

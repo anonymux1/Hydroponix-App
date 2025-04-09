@@ -2,17 +2,21 @@ import 'package:Hydroponix/services/cart_controller.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import '../components/CarouselSlider.dart';
-import '../models/Product.dart';
-import '../services/shop_controller.dart';
+import '../../components/CarouselSlider.dart';
+import '../../models/Product.dart';
+import '../../services/shop_controller.dart';
 
-final ShopController controller = Get.put(ShopController());
-final CartController cartController = Get.put(CartController());
-
-class ProductDetailScreen extends StatelessWidget {
-  final Product product;
-
+class ProductDetailScreen extends StatefulWidget {
+  final HydroponixProduct product;
   const ProductDetailScreen(this.product, {super.key});
+    @override
+  _ProductDetailScreenState createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  final ShopController controller = Get.put(ShopController());
+  final CartController cartController = Get.put(CartController());
+  late ProductVariant selectedVariant;
 
   PreferredSizeWidget _appBar(BuildContext context) {
     return AppBar(
@@ -36,7 +40,9 @@ class ProductDetailScreen extends StatelessWidget {
           bottomLeft: Radius.circular(200),
         ),
       ),
-      child: CarouselSlider(items: product.images),
+      child: CarouselSlider(items: widget.product.images.map((image) {
+        return image;
+      }).toList(),),
     );
   }
 
@@ -46,7 +52,7 @@ class ProductDetailScreen extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         RatingBar.builder(
-          initialRating: product.rating,
+          initialRating: widget.product.reviews!.rating,
           direction: Axis.horizontal,
           itemBuilder: (_, __) => const Icon(
             Icons.star,
@@ -55,7 +61,7 @@ class ProductDetailScreen extends StatelessWidget {
           onRatingUpdate: (_) {},
         ),
         Text(
-          "(4500 Reviews)",
+          "(${widget.product.reviews?.reviewCount} Reviews)",
           style: Theme.of(context).textTheme.displaySmall?.copyWith(
             fontWeight: FontWeight.w300,
           ),
@@ -65,18 +71,21 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   Widget productSizesListView() {
+    selectedVariant = widget.product.variants[0];
     return ListView.builder(
       scrollDirection: Axis.horizontal,
-      itemCount: controller.sizeType(product).length,
+      itemCount: widget.product.variants.length,
       itemBuilder: (_, index) {
+        final variant = widget.product.variants[index];
+        bool isSelected = selectedVariant.id == variant.id; // Check if variant is selected
         return InkWell(
-          onTap: () => controller.switchBetweenProductSizes(product, index),
+          onTap: () => selectedVariant = variant,
           child: AnimatedContainer(
             margin: const EdgeInsets.only(right: 5, left: 5),
             alignment: Alignment.center,
-            width: controller.isNominal(product) ? 40 : 70,
+            width: 70,
             decoration: BoxDecoration(
-              color: controller.sizeType(product)[index].isSelected == false ? Colors.white : Colors.orange,
+              color: isSelected ? Colors.orange : Colors.white,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: Colors.grey,
@@ -86,7 +95,7 @@ class ProductDetailScreen extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             child: FittedBox(
               child: Text(
-                controller.sizeType(product)[index].numerical,
+                variant.title,
                 style: const TextStyle(
                   fontWeight: FontWeight.w500,
                   fontSize: 15,
@@ -122,7 +131,7 @@ class ProductDetailScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          product.name,
+                          widget.product.title,
                           style: Theme.of(context).textTheme.displayMedium,
                         ),
                         const SizedBox(height: 10),
@@ -130,15 +139,14 @@ class ProductDetailScreen extends StatelessWidget {
                         const SizedBox(height: 10),
                         Row(
                           children: [
-                            Text(
-                              product.off != null ? "\$${product.off}" : "\$${product.price}",
+                            Text("${selectedVariant.price}",
                               style: Theme.of(context).textTheme.displayLarge,
                             ),
                             const SizedBox(width: 3),
                             Visibility(
-                              visible: product.off != null ? true : false,
+                              visible: selectedVariant.compareAtPrice!=null ? selectedVariant.compareAtPrice! > selectedVariant.price ?true:false : false,
                               child: Text(
-                                "\$${product.price}",
+                                "${selectedVariant.compareAtPrice}",
                                 style: const TextStyle(
                                   decoration: TextDecoration.lineThrough,
                                   color: Colors.grey,
@@ -148,7 +156,7 @@ class ProductDetailScreen extends StatelessWidget {
                             ),
                             const Spacer(),
                             Text(
-                              product.isAvailable ? "Available in stock" : "Not available",
+                              selectedVariant.availableForSale ? "Available in stock" : "Not available",
                               style: const TextStyle(fontWeight: FontWeight.w500),
                             )
                           ],
@@ -159,7 +167,7 @@ class ProductDetailScreen extends StatelessWidget {
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 10),
-                        Text(product.about),
+                        Text(widget.product.description),
                         const SizedBox(height: 20),
                         SizedBox(
                           height: 40,
@@ -171,7 +179,7 @@ class ProductDetailScreen extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: product.isAvailable ? () => cartController.addToCart(product) : null,
+                            onPressed: widget.product.isAvailableForSale ? () => cartController.addToCart(widget.product.id, selectedVariant.id ) : null,
                             child: const Text("Add to cart"),
                           ),
                         )

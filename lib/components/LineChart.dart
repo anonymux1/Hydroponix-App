@@ -30,7 +30,7 @@ class _MyLineChartState extends State<MyLineChart> {
         gridData: FlGridData(show: false), // Hide grid lines
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) => Colors.blueGrey.withOpacity(0.8),
+            getTooltipColor: (touchedSpot) => Colors.blueGrey.withValues(alpha: 0.8),
             getTooltipItems: (List<LineBarSpot> touchedBarSpots) {
               return touchedBarSpots.map((barSpot) {
                 final flSpot = barSpot;

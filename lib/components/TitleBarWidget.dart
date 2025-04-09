@@ -6,7 +6,7 @@ import 'package:Hydroponix/screens/NotificationsScreen.dart';
 import 'package:Hydroponix/services/notifications_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:Hydroponix/screens/MyAccountScreen.dart';
-import '../screens/CartScreen.dart';
+import '../screens/Shop/CartScreen.dart';
 import '../services/navigation_controller.dart';
 //import 'package:http/http.dart' as http;
 //import 'dart:io';
@@ -56,11 +56,11 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   GetBuilder<CartController>(builder: (controller) {
                     return Badge(
-                      label: Text(controller.productsCount.toString()),
+                      label: Text(controller.totalItems.toString()),
                       backgroundColor: Colors.red,
                       textColor: Colors.white,
                       alignment: Alignment.topRight,
-                      isLabelVisible: controller.productsCount > 0,
+                      isLabelVisible: controller.totalItems > 0,
                     );
                   })
                 ],
@@ -130,11 +130,11 @@ class TitleBarWidget extends StatelessWidget implements PreferredSizeWidget {
             ),
             GetBuilder<CartController>(builder: (controller) {
               return Badge(
-                label: Text(controller.productsCount.toString()),
+                label: Text(controller.totalItems.toString()),
                 backgroundColor: Colors.red,
                 textColor: Colors.white,
                 alignment: Alignment.topRight,
-                isLabelVisible: controller.productsCount > 0,
+                isLabelVisible: controller.totalItems > 0,
               );
             })
           ],

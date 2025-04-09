@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:animations/animations.dart';
-import 'package:Hydroponix/screens/ProductDetailScreen.dart';
+import 'package:Hydroponix/screens/Shop/ProductDetailScreen.dart';
 import '../../models/Product.dart';
 
 class OpenContainerWrapper extends StatelessWidget {
@@ -11,7 +11,7 @@ class OpenContainerWrapper extends StatelessWidget {
   });
 
   final Widget child;
-  final Product product;
+  final HydroponixProduct product;
 
   @override
   Widget build(BuildContext context) {

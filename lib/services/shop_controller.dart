@@ -1,107 +1,99 @@
 import 'package:Hydroponix/models/Product.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:shopify_flutter/shopify_config.dart';
-import '../models/Numerical.dart';
-import '../models/ProductCategory.dart';
-import '../models/ProductSizeType.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:shopify_flutter/shopify_flutter.dart';
+import 'package:Hydroponix/services/reviews_provider.dart';
+import 'package:Hydroponix/services/cart_controller.dart';
+import '../models/ProductReview.dart';
 
 class ShopController extends GetxController {
-  List<Product> allProducts = [];
-  RxList<Product> filteredProducts = <Product>[].obs;
-  RxList<ProductCategory> categories = <ProductCategory>[].obs;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CartController cartController = Get.put(CartController());
+  RxList<HydroponixProduct> products = <HydroponixProduct>[].obs;
+  RxList<HydroponixProduct> filteredProducts = <HydroponixProduct>[].obs;
+  RxBool isLoading = true.obs;
+  RxList<String> categories = <String>[].obs;
+  Map <String,String> heroBanner = <String,String>{};
 
-  void filterItemsByCategory(int index) {
-    for (ProductCategory element in categories) {
-      element.isSelected = false;
+  @override
+  void onInit() {
+    super.onInit();
+    initShop();
+  }
+
+  Future<void> initShop() async {
+    try {
+      await fetchCategories();
+      await fetchProducts();
+      await fetchHeroBanner();
+    } catch (e) {
+      print("Error initializing shop: $e");
+    } finally {
+      isLoading.value = false;
     }
-    categories[index].isSelected = true;
-
-    if (categories[index].type == ProductType.all) {
-      filteredProducts.assignAll(allProducts);
+  }
+  // Fetch categories from Firestore
+  Future<void> fetchCategories() async {
+    try {
+      QuerySnapshot catSnapshot = await _firestore
+          .collection('categories')
+          .get();
+      categories.value =
+          catSnapshot.docs.map((doc) => doc['title'] as String).toList();
+    } catch (e) {
+      print("Error fetching  / categories: $e");
+    }
+  }
+  // Fetch products from Firestore
+    Future<void> fetchProducts() async {
+      try {
+        QuerySnapshot snapshot = await _firestore.collection('products').get();
+        products.value = snapshot.docs.map((doc) {
+          return HydroponixProduct.fromJson(doc.data() as Map<String, dynamic>);
+        }).toList();
+        await fetchProductReviews();
+      } catch (e) {
+        print("Error fetching products :$e");
+      }
+    }
+    // Fetch reviews for each product
+      Future<void> fetchProductReviews() async {
+        for (var product in products) {
+          try {
+            Map<String, dynamic>? reviewData =
+            await ReviewService.fetchReviews(product.id);
+            if (reviewData != null) {
+              product.reviews = ProductReview.fromJson(reviewData);
+            }
+          } catch (e) {
+            print("Error fetching reviews for product ${product.id}: $e");
+          }
+        }
+      }
+  // Fetch hero banner from Firestore
+  Future<void> fetchHeroBanner() async {
+    try{
+          QuerySnapshot banner = await _firestore.collection('heroBanner').get();
+          if (banner.docs.isNotEmpty) {
+            // Assuming you want to use the first document as the hero banner
+             heroBanner = Map.fromEntries(
+                 banner.docs.map((doc) {
+                   var data = doc.data() as Map<String, dynamic>;
+                   return MapEntry(data['image_url'] as String, data['click_url'] as String);
+                 })
+             );
+          }
+        }
+        catch(e)  {
+          print("Error fetching hero banner: $e");
+        }
+      }
+  void searchProducts(String query) {
+    if (query.isEmpty) {
+      filteredProducts.assignAll(products);
     } else {
-      filteredProducts.assignAll(allProducts.where((item) {
-        return item.type == categories[index].type;
-      }).toList());
+      filteredProducts.assignAll(
+        products.where((product) => product.title.toLowerCase().contains(query.toLowerCase())).toList(),
+      );
     }
-    update();
   }
-
-  void startShop() {
-    ShopifyConfig.setConfig(
-      storefrontAccessToken: dotenv.env['STOREFRONT_ACCESS_TOKEN'] ?? '',
-      storeUrl: dotenv.env['STORE_URL'] ?? '',
-      adminAccessToken: dotenv.env['ADMIN_ACCESS_TOKEN'],
-      storefrontApiVersion: dotenv.env['STOREFRONT_API_VERSION'] ?? '2023-07',
-      cachePolicy: CachePolicy.networkOnly,
-      language: dotenv.env['LANGUAGE_LOCALE'] ?? 'en',
-    );
-  }
-
-  void isFavorite(int index) {
-    filteredProducts[index].isFavorite = !filteredProducts[index].isFavorite;
-    update();
-  }
-
-  getFavoriteItems() {
-    filteredProducts.assignAll(
-      allProducts.where((item) => item.isFavorite),
-    );
-  }
-
-  getAllItems() {
-    filteredProducts.assignAll(allProducts);
-  }
-
-  List<Numerical> sizeType(Product product) {
-    ProductSizeType? productSize = product.sizes;
-    List<Numerical> numericalList = [];
-
-    if (productSize?.numerical != null) {
-      for (var element in productSize!.numerical!) {
-        numericalList.add(Numerical(element.numerical, element.isSelected));
-      }
-    }
-
-    if (productSize?.categorical != null) {
-      for (var element in productSize!.categorical!) {
-        numericalList.add(
-          Numerical(
-            element.categorical.name,
-            element.isSelected,
-          ),
-        );
-      }
-    }
-
-    return numericalList;
-  }
-
-  bool isNominal(Product product) => product.sizes?.numerical != null;
-
-  void switchBetweenProductSizes(Product product, int index) {
-    sizeType(product).forEach((element) {
-      element.isSelected = false;
-    });
-
-    if (product.sizes?.categorical != null) {
-      for (var element in product.sizes!.categorical!) {
-        element.isSelected = false;
-      }
-
-      product.sizes?.categorical![index].isSelected = true;
-    }
-
-    if (product.sizes?.numerical != null) {
-      for (var element in product.sizes!.numerical!) {
-        element.isSelected = false;
-      }
-
-      product.sizes?.numerical![index].isSelected = true;
-    }
-
-    update();
-  }
-
 }

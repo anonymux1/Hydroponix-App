@@ -7,13 +7,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/System.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 
 class provisioningController extends GetxController {
   SystemList? systemsList;
   final isLoading = false.obs;
   final isProvisioned = false.obs;
   final isSaved = false.obs;
-  final error = ''.obs;
+    final error = ''.obs;
   var systemId;
 
   Future<String> _getUserId() async {
@@ -26,17 +27,26 @@ class provisioningController extends GetxController {
     }
   }
 
-  Future<void> _saveToFirestore(System? newSystem) async {
-    final userId = await _getUserId();
-    final firestore = FirebaseFirestore.instance;
-    // Get the newest system (assuming the one just added)
-    if (newSystem != null) {
-      await firestore.collection(userId).doc('SystemsList').set({
-        'Systems': FieldValue.arrayUnion([newSystem])
-      }, SetOptions(merge: true)); // Merge with existing data
+  Future<void> _saveToFirestore(System? system) async {
+      // Get the newest system (assuming the one just added)
+    if (system == null)
+    return;
+    try{
+      final userId = await _getUserId();
+       await FirebaseFirestore.instance
+        .collection("Users")
+        .doc(userId)
+        .collection("systems")
+        .doc(system.systemId)
+        .set(system.toJson(), SetOptions(merge: true))
+        .timeout(const Duration(seconds: 10)); // Timeout for Firestore
       isSaved(true); // Update status in controller
-    } else {
-      // Handle the unlikely case of newSystem being null (logging or error handling)
+    } on TimeoutException {
+      error.value = 'Saving to Firestore timed out. Please try again.';
+    } on FirebaseException catch (e) {
+    error.value = 'Firestore Error: ${e.message}';
+    } catch (e) {
+    error.value = 'Unexpected error while saving: $e';
     }
   }
 
@@ -64,7 +74,7 @@ class provisioningController extends GetxController {
       else if (moduleName == "Water Pump")
         waterPumpSwitch = switchNumber;
     });
-    final payload = jsonEncode({
+    final payload = jsonEncode({       // Create payload
       'ssid': userSystems?.getSystemList()?[length!].ssid,
       'password': userSystems?.getSystemList()?[length!].password,
       'userId': await _getUserId(),
@@ -82,10 +92,8 @@ class provisioningController extends GetxController {
       isLoading(true);
       // Construct API endpoint URL using ESP8266 IP address
       final url = Uri.http('192.168.1.1', '/updateConfig');
-      // Create payload
       // Send request (using http package)
-      final response = await http.post(url, body: payload);
-
+      final response = await http.post(url, body: payload).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         // Handle successful provisioning
         isProvisioned(true);
@@ -93,6 +101,8 @@ class provisioningController extends GetxController {
       } else {
         error.value = 'Something went wrong. Please try again.';
       }
+    } on TimeoutException {
+      error.value = 'Connection timed out. Please check your network and try again.';
     } on HttpException {
       // Catch HTTP errors specifically
       error.value = 'Something went wrong. Please try again.';

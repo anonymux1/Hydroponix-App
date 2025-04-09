@@ -41,7 +41,7 @@ class AnalyzeController extends GetxController {
           final timestamp = log.timestamp.millisecondsSinceEpoch.toDouble() /
               1000; // Convert to seconds
           print(timestamp);
-          final value = log.eventData.toDouble() ?? 0.0;
+          final value = log.eventData.toDouble() ??  0.0;
           print(value);
           return FlSpot(timestamp, value);
       }).toList();

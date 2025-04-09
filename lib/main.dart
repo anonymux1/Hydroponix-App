@@ -14,17 +14,13 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
   await dotenv.load(fileName: ".env");
-
   //Set App Config
   Get.put<AppConfig>(AppConfig()); // Initialize AppConfig early
-
   //Setup notifications
   final notificationsHandler = NotificationsHandler(); // Initialize here
   notificationsHandler.setupNotifications();
   Get.put(NotificationController()); // Initialize NotificationController
-
   //RunApp
   runApp(GetMaterialApp(home: const MyApp()));
 }

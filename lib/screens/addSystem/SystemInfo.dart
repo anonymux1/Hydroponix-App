@@ -1,11 +1,10 @@
 import 'dart:convert';
-import 'package:Hydroponix/screens/addSystem/SystemModulesMapping.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Or your preferred state management
 import 'package:http/http.dart' as http; // For API calls
 import 'package:Hydroponix/services/systeminfo_controller.dart';
-
 import '../../models/SystemList.dart';
+import 'SystemNetworkCredentials.dart';
 
 class SystemInfoScreen extends StatefulWidget {
   final SystemList? userSystems;
@@ -18,7 +17,6 @@ class SystemInfoScreen extends StatefulWidget {
 class _SystemInfoScreenState extends State<SystemInfoScreen> {
   final SystemInfoController systemInfoController = Get.find();
   var isLoading = true.obs;
-
   @override
   void initState() {
     super.initState();
@@ -55,8 +53,11 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
         );
       }
     } catch (error) {
-      // Handle network errors
-      await showDialog(
+      _showErrorDialog();
+    }
+  }
+   void _showErrorDialog() {   // Handle network errors
+      showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Error'),
@@ -74,55 +75,58 @@ class _SystemInfoScreenState extends State<SystemInfoScreen> {
         ),
       );
     }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("System Information")),
-      body: _buildBody(),
+      body: Obx(() {
+      if (isLoading.value) {
+        return Center(child: CircularProgressIndicator());
+      } else {
+        return Column(
+          children: [
+            Text("Detected Version: ${systemInfoController.newSystem?.version}"),
+            Text("Number of Switches: ${systemInfoController.newSystem?.switches}"),
+            if(systemInfoController.newSystem?.version == "PRO")
+              _buildProNetworkOption(),
+            ElevatedButton(
+              onPressed: () {
+                    Get.to(() => NetworkCredentialsScreen(widget.userSystems, false));
+              },
+              child: const Text('NEXT'),
+            ),
+          ],
+        );
+      }
+    }),
     );
   }
 
-  Widget _buildBody() {
-    if (isLoading.value) {
-      return Center(child: CircularProgressIndicator());
-    } else {
-      return Column(
-        children: [
-          Text("Detected Version: ${systemInfoController.newSystem?.version}"),
-          Text("Number of Switches: ${systemInfoController.newSystem?.switches}"),
-          Text("Number of Heavy Duty Switches: ${systemInfoController.newSystem?.heavySwitches}"),
-          Expanded(
-            child: ListView.builder(
-                itemCount: systemInfoController.newSystem?.sensors?.length ?? 0,
-                itemBuilder: (context, index) {
-                  var sensorName = systemInfoController.newSystem?.sensors?[index].toString();
-                  List<Widget> widgets = [
-                    ListTile(
-                      title: Text(sensorName!),
-                    ),
-                  ];
-                  if (systemInfoController.newSystem?.version == 'HOBBY') {
-                    widgets.add(Text(
-                        'Plug in both the air and water pumps. Place the water pump and the air stone in the nutrient reservoir'));
-                  } else if (systemInfoController.newSystem?.version == 'PRO') {
-                    widgets.add(Text('Plug in all the modules for your system.'));
-                    widgets.add(Text('In the light duty switches, plug in air pump, water pump, LED lights, humidifier'));
-                    widgets.add(Text('In the heavy duty switches, plug in water heater, water chiller, Desert Air Cooler / AC'));
-                  }
-                  return Column(
-                      children: widgets); // Return the widgets within a Column
-                }),
-          ),
-          ElevatedButton(
-            onPressed: () {
-                Get.to(() => SystemModulesMappingScreen(systemInfoController.systemList));
+  Widget _buildProNetworkOption() {
+    return Column(
+      children: [
+        Text('Select a WiFi network or use the in-built 2G network for internet?'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                // Choose network
+                Get.to(() => NetworkCredentialsScreen(widget.userSystems, false));
               },
-            child: const Text('NEXT'),
-          ),
-        ],
-      );
-    }
+              child: Text('Choose WiFi'),
+            ),
+            SizedBox(width: 20),
+            ElevatedButton(
+              onPressed: () {
+                Get.to(() => NetworkCredentialsScreen(widget.userSystems, true));
+                },
+              child: Text('Use 2G Data'),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
